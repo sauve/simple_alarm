@@ -7,10 +7,10 @@ Version simplifiee d'un reveil matin
 + boitier imprime
 + 4 boutons
 + Afficheur 4 chiffres 7 segments
-+ Arduino MCU
++ Arduino Nano MCU
 + speaker
 + LED Alarm et PM
-+ Module RTC 
++ Module RTC avec baterie
 
 
 ## Fonctionnalite
@@ -24,3 +24,12 @@ Version simplifiee d'un reveil matin
 
 + C++
 + Arduino IDE
+
+## Boitier
+
++ 4 boutons sur le dessus
++ Afficheur 4 digit 7 segment 0.9cm avant centre
++ 3 DEL a cote 7 segment ( PM, Alarm 1 et 2)
++ Espace arriere pour fil USB vers arduino
++ Espace sur le cote pour le hau-parleur ( multi-trour et socle)
++ riser pour visser le protoboard dans le bas

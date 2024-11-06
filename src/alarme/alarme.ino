@@ -27,29 +27,23 @@
 #define BTN_MOINS   0b00000100
 #define BTN_OK    0b00001000
 
+class GestionEtat
+{
+  public:
+    virtual void HandleButtons() = 0;
+    virtual void HandleState() = 0;
+}
+
 
 TM1637Display display(CLK, DIO);
 DS3231 myRTC;
+GestionEtat* EtatCourant = nullptr;
 
 
 // Variables pouir la gestion des boutons
 uint8_t btnlastpressed;
 uint8_t btnpressed;
 uint8_t btnchanged;
-
-void setup() {
-  // pinmode pour les boutons
-
-  // pinmode pour les LED
-
-  // inititalisation speaker
-
-  // initialisation Afficheur 7 segment
-
-  // Initialisation module RTC
-
-}
-
 
 void updateButtons()
 {
@@ -87,11 +81,110 @@ bool stillPressed( uint8_t button)
   return ((btnpressed & ~btnchanged) & button ) != 0;
 }
 
+
+class LEDSequencer()
+{
+  public:
+  void setup();
+  void update();
+
+  protected:
+    int maxBrightness;
+    int pmFreq;
+    int Alarm1Freq;
+    int Alarm2Freq;
+    bool pmOn;
+    bool Alarm1On;
+    bool Alarm2On;
+}
+
+void LEDSequencer::setup()
+{
+  pinMode();
+  pinMode();
+  pinMode();
+}
+
+void LEDSequencer::update()
+{
+  // Si pmOn
+  // selon Freq
+  // Si 0 = On selon max brightness
+  // Sinon, selon Freq et le conteur
+}
+
+LEDSequencer leds;
+
+
+class SpeakerSequencer()
+{
+  public:
+    void setup();
+    void update();
+
+    void Beep();
+  protected:
+
+}
+
+
+void SpeakerSequencer::setup()
+{
+  pinMode();
+}
+
+void SpeakerSequencer::update()
+{
+  // regarde le temps ecouler et set le tone selon la commande
+  // avance a la prochaine commande
+}
+
+void SpeakerSequencer::setup()
+{
+  // set le tone et quand l'arreter
+}
+
+
+SpeakerSequencer speaker;
+
+class GestionAfficheHeure : GestionEtat
+{
+  public:
+    void HandleButtons();
+    void HandleState();
+}
+
+EtatAfficheHeure = GestionAfficheHeure();
+
+void setup() {
+  // pinmode pour les boutons
+
+  // pinmode pour les LED
+  leds.setup();
+
+  // inititalisation speaker
+  speaker.setup();
+
+  // initialisation Afficheur 7 segment
+
+  // Initialisation module RTC
+
+  // Etat initiale
+  EtatCourant = &EtatAfficheHeure;
+
+}
+
+
 void loop() {
   // Mise a jour bouton
+  updateButtons();
 
   // handle selon l'etat
+  EtatCourant->HandleButtons();
+  EtatCourant->HandleState();
+
+  speaker.update();
 
   // Affiche selon l'etat
-
+  leds.update();
 }
