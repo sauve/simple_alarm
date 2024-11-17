@@ -33,3 +33,9 @@ Version simplifiee d'un reveil matin
 + Espace arriere pour fil USB vers arduino
 + Espace sur le cote pour le hau-parleur ( multi-trour et socle)
 + riser pour visser le protoboard dans le bas
+
+
+## Configuration
+
+Les configuration sont soit stocker dans le module RTC ou en EEPROM. Les heures et activation des alarmes sont celle au module RTC alors que la luminosite, la duree du snooze et les informations a propos du son sont en EEPROM
+
