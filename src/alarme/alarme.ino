@@ -81,6 +81,72 @@ bool stillPressed( uint8_t button)
   return ((btnpressed & ~btnchanged) & button ) != 0;
 }
 
+class DisplaySeuqencer()
+{
+  public:
+    void setup();
+    void update();
+
+    
+    void ChangeLuminosite();
+    void FlashDeuxPoints();
+    void FlashChiffreDroit();
+    void FlashChiffreGauche();
+
+
+    void AfficheHeure();
+    
+  protected:
+    int lastFlash = 0;
+    bool flashDroit = false;
+    bool flashGauche = false;
+    bool flashCentre - false;
+    // valeur affichage
+}
+
+void DisplaySeuqencer::setup()
+{
+  // va lire la luminosite en EEPROM
+  // initialise le display et la comm
+  // clear display par defaut
+}
+
+void DisplaySeuqencer::update()
+{
+  // valid flash
+  // si mise a jour
+  // update display
+}
+
+
+void DisplaySeuqencer::ChangeLuminosite()
+{
+  // update selon difference en parametre
+  // set en EEPROM
+  // set update
+}
+
+
+void DisplaySeuqencer::FlashDeuxPoints()
+{}
+
+
+void DisplaySeuqencer::FlashChiffreDroit()
+{}
+
+void DisplaySeuqencer::FlashChiffreGauche()
+{}
+
+void DisplaySeuqencer::FlashChiffreGauche()
+{}
+
+void DisplaySeuqencer::AfficheHeure()
+{
+  // selon 12/24 ou non
+  // set les valeur d'affichage
+  // set le flag pour mise a jour
+}
+
 
 class LEDSequencer()
 {
@@ -187,4 +253,7 @@ void loop() {
 
   // Affiche selon l'etat
   leds.update();
+
+  // 7 segment update
+
 }
