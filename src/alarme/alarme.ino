@@ -1,6 +1,6 @@
 // Simple Alarme
 
-#include <TM1637Display.h>
+#include <TM1637.h>
 #include <DS3231.h>
 #include <Wire.h>
 #include <inttypes.h>
@@ -20,6 +20,9 @@
 #define LED_ALARM_PIN 6
 #define LED_ALARM2_PIN 10
 
+// SPEAKER PIN
+#define SPEAKER_PIN 9
+
 
 // button bit constant
 #define BTN_CONF    0b00000001
@@ -32,10 +35,10 @@ class GestionEtat
   public:
     virtual void HandleButtons() = 0;
     virtual void HandleState() = 0;
-}
+};
 
 
-TM1637Display display(CLK, DIO);
+TM1637 tm(CLK, DIO);
 DS3231 myRTC;
 GestionEtat* EtatCourant = nullptr;
 
@@ -81,7 +84,7 @@ bool stillPressed( uint8_t button)
   return ((btnpressed & ~btnchanged) & button ) != 0;
 }
 
-class DisplaySeuqencer()
+class DisplaySeuqencer
 {
   public:
     void setup();
@@ -100,9 +103,9 @@ class DisplaySeuqencer()
     int lastFlash = 0;
     bool flashDroit = false;
     bool flashGauche = false;
-    bool flashCentre - false;
+    bool flashCentre = false;
     // valeur affichage
-}
+};
 
 void DisplaySeuqencer::setup()
 {
@@ -137,8 +140,6 @@ void DisplaySeuqencer::FlashChiffreDroit()
 void DisplaySeuqencer::FlashChiffreGauche()
 {}
 
-void DisplaySeuqencer::FlashChiffreGauche()
-{}
 
 void DisplaySeuqencer::AfficheHeure()
 {
@@ -148,7 +149,7 @@ void DisplaySeuqencer::AfficheHeure()
 }
 
 
-class LEDSequencer()
+class LEDSequencer
 {
   public:
   void setup();
@@ -162,13 +163,13 @@ class LEDSequencer()
     bool pmOn;
     bool Alarm1On;
     bool Alarm2On;
-}
+};
 
 void LEDSequencer::setup()
 {
-  pinMode();
-  pinMode();
-  pinMode();
+  pinMode(LED_PM_PIN, OUTPUT);
+  pinMode(LED_ALARM_PIN, OUTPUT);
+  pinMode(LED_ALARM2_PIN, OUTPUT);
 }
 
 void LEDSequencer::update()
@@ -182,7 +183,7 @@ void LEDSequencer::update()
 LEDSequencer leds;
 
 
-class SpeakerSequencer()
+class SpeakerSequencer
 {
   public:
     void setup();
@@ -191,12 +192,12 @@ class SpeakerSequencer()
     void Beep();
   protected:
 
-}
+};
 
 
 void SpeakerSequencer::setup()
 {
-  pinMode();
+  pinMode(SPEAKER_PIN, OUTPUT);
 }
 
 void SpeakerSequencer::update()
@@ -205,7 +206,7 @@ void SpeakerSequencer::update()
   // avance a la prochaine commande
 }
 
-void SpeakerSequencer::setup()
+void SpeakerSequencer::Beep()
 {
   // set le tone et quand l'arreter
 }
@@ -213,14 +214,22 @@ void SpeakerSequencer::setup()
 
 SpeakerSequencer speaker;
 
-class GestionAfficheHeure : GestionEtat
+class GestionAfficheHeure : public GestionEtat
 {
   public:
     void HandleButtons();
     void HandleState();
+};
+
+void GestionAfficheHeure::HandleButtons()
+{
 }
 
-EtatAfficheHeure = GestionAfficheHeure();
+void GestionAfficheHeure::HandleState()
+{
+}
+
+GestionAfficheHeure EtatAfficheHeure;
 
 void setup() {
   // pinmode pour les boutons
