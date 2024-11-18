@@ -35,6 +35,12 @@ Version simplifiee d'un reveil matin
 + riser pour visser le protoboard dans le bas
 
 
+## Librairies Arduino
+
++ RTC :
++ 7 Segments :
+
+
 ## Configuration
 
 Les configuration sont soit stocker dans le module RTC ou en EEPROM. Les heures et activation des alarmes sont celle au module RTC alors que la luminosite, la duree du snooze et les informations a propos du son sont en EEPROM

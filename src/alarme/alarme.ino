@@ -38,6 +38,8 @@ class GestionEtat
 };
 
 
+unsigned long lastUpdateTime = 0;
+unsigned long curUpdateTime = 0;
 TM1637 tm(CLK, DIO);
 DS3231 myRTC;
 GestionEtat* EtatCourant = nullptr;
@@ -109,7 +111,10 @@ class DisplaySeuqencer
     bool flashDroit = false;
     bool flashGauche = false;
     bool flashCentre = false;
+    
     // valeur affichage
+    // devrait avoir le display ici, tout passe par le sequenceur
+    // Flash pourrait etre plus un fade ou hard flash
 };
 
 void DisplaySeuqencer::setup()
@@ -334,6 +339,7 @@ class GestionAfficheHeure : public GestionEtat
 
   protected:
     int presedconf = 0;
+    unsigned long lastUpdate = 0; 
 };
 
 void GestionAfficheHeure::HandleButtons()
@@ -374,9 +380,46 @@ void GestionAfficheHeure::HandleButtons()
 
 void GestionAfficheHeure::HandleState()
 {
+  // affiche l'heure
+  if ( curUpdateTime - lastUpdate > 1000 )
+  {
+    lastUpdate = curUpdateTime;
+    bool h12Flag;
+    bool pmFlag;
+    int hour = myRTC.getHour(h12Flag, pmFlag);
+    int minute = myRTC.getMinute();
+    int temp = hour * 100 + minute;
+    tm.display(temp); 
+  }
 }
 
 GestionAfficheHeure EtatAfficheHeure;
+
+class ConsoleManager
+{
+public:
+  void Setup();
+  void Update();
+  
+protected:
+  // liste de commande supporte
+  // set heure, date, alarmes, config
+  // change state
+  
+};
+
+void ConsoleManager::Setup()
+{
+  
+}
+
+void ConsoleManager::Update()
+{
+
+}
+
+  
+ConsoleManager console;
 
 void setup() {
   // pinmode pour les boutons
@@ -384,11 +427,9 @@ void setup() {
   pinMode(BTN_PLUS_PIN, INPUT_PULLUP);
   pinMode(BTN_MOINS_PIN, INPUT_PULLUP);
   pinMode(BTN_OK_PIN, INPUT_PULLUP);
-  
 
+  console.Setup();
   Serial.begin(9600);
-
-  
 
   // pinmode pour les LED
   leds.setup();
@@ -417,6 +458,10 @@ void setup() {
 
 
 void loop() {
+
+  lastUpdateTime = curUpdateTime;
+  curUpdateTime = millis();
+
   // Mise a jour bouton
   updateButtons();
 
@@ -431,5 +476,9 @@ void loop() {
 
   // 7 segment update
   display.update();
+
+  console.Update();
+
+  // delai selon peut-etre millis ?
   delay(10);
 }
