@@ -405,19 +405,173 @@ protected:
   // liste de commande supporte
   // set heure, date, alarmes, config
   // change state
-  
+  char cmdbuffer[64];
+  int cmdindex;
+
+  void clearBuffer();
+  void addCharCmd( char c);
+  void processCmd();
 };
 
 void ConsoleManager::Setup()
 {
-  
+  clearBuffer();
 }
 
 void ConsoleManager::Update()
 {
+  // regarde s'il y a du data dans Serial
+  // attend d'avoir une fin de ligne
+  if (Serial.available() > 0) {
+    // read the incoming byte:
+    char inChar = Serial.read();
+    // say what you got:
+    if ( inChar == '\n' )
+    {
+      // fin de ligne, execute la commande
+      processCmd();
+      // clear buffer
+      clearBuffer();
+    }
+    else
+    {
+      addCharCmd( inChar);
+    }
+  }
+
+  // si oui, execute la commande
+  
+  // si non, rien a faire
 
 }
 
+void ConsoleManager::clearBuffer()
+{
+  for (int i = 0; i < 64; i++)
+  {
+    cmdbuffer[i] = 0;
+  }
+  cmdindex = 0;
+}
+
+void ConsoleManager::addCharCmd( char c)
+{
+  // index 63 doit etre un 0 pour la fin de la chaine
+  if ( cmdindex < 62 )
+  {
+    cmdbuffer[cmdindex] = c;
+    cmdindex++;
+  }
+}
+
+void ConsoleManager::processCmd()
+{
+  if (strcmp(cmdbuffer, "showtime")==0)
+  {
+    bool h12Flag;
+    bool pmFlag;
+    int hour = myRTC.getHour(h12Flag, pmFlag);
+    int minute = myRTC.getMinute();
+    tm.display(hour * 100 + minute); 
+  }
+  else if (strcmp(cmdbuffer, "settime")==0)
+  {
+    // set date
+    myRTC.setClockMode(false);  // set to 24h
+    myRTC.setYear(24);
+    myRTC.setMonth(11);
+    myRTC.setDate(18);
+    myRTC.setDoW(2);
+    myRTC.setHour(20);
+    myRTC.setMinute(10);
+    myRTC.setSecond(0);
+  }
+  else if (strcmp(cmdbuffer, "fade")==0)
+  {
+    // set alarm 1
+    for (int i = 90; i >= 0; i -= 10)
+    {
+      tm.setBrightnessPercent(i);
+      tm.display("fade");
+      delay(100);
+      
+    }
+    tm.setBrightnessPercent(90);
+  }
+  else if (strcmp(cmdbuffer, "setalarm2")==0)
+  {
+    // set alarm 2
+    Serial.println("commande setalarm2");
+  }
+  else if (strcmp(cmdbuffer, "ledon")==0)
+  {
+    // config
+    leds.SetPM( true, 1);
+    leds.SetAlarm1( true, 10);
+    leds.SetAlarm2( true, 128);
+  }
+  else if (strcmp(cmdbuffer, "ledoff")==0)
+  {
+    // state
+    leds.SetPM( false, 0);
+    leds.SetAlarm1( false, 0);
+    leds.SetAlarm2( false, 0);
+  }
+  else if (strcmp(cmdbuffer, "showtext")==0)
+  {
+    // state
+    tm.display("lundi"); 
+    delay(1000);
+    tm.display("Hardi"); 
+    delay(1000);
+    tm.display("Hercredi"); 
+    delay(1000);
+    tm.display("jeudi"); 
+    delay(1000);
+    tm.display("uendredi"); 
+    delay(1000);
+    tm.display("saHedi"); 
+    delay(1000);
+    tm.display("diHanche"); 
+    delay(1000);
+    tm.display("januier"); 
+    delay(1000);
+    tm.display("feurier"); 
+    delay(1000);
+    tm.display("Hars"); 
+    delay(1000);
+    tm.display("auril"); 
+    delay(1000);
+    tm.display("Hai"); 
+    delay(1000);
+    tm.display("juin"); 
+    delay(1000);
+    tm.display("juillet"); 
+    delay(1000);
+    tm.display("aout"); 
+    delay(1000);
+    tm.display("septeHbre"); 
+    delay(1000);
+    tm.display("octobre"); 
+    delay(1000);
+    tm.display("nouehbre"); 
+    delay(1000);
+    tm.display("deceHbre"); 
+    delay(1000);
+  }
+  else if (strcmp(cmdbuffer, "temp")==0)
+  {
+    // state
+    int temp = myRTC.getTemperature();
+    tm.display(temp);
+  }
+  else
+  {
+    // unknown command
+    Serial.print("commande inconnue: ");
+    Serial.println(cmdbuffer);
+  }
+}
   
 ConsoleManager console;
 
@@ -433,9 +587,9 @@ void setup() {
 
   // pinmode pour les LED
   leds.setup();
-  leds.SetPM( true, 1);
-  leds.SetAlarm1( true, 10);
-  leds.SetAlarm2( true, 128);
+  leds.SetPM( false, 1);
+  leds.SetAlarm1( false, 10);
+  leds.SetAlarm2( false, 128);
 
   // inititalisation speaker
   speaker.setup();
