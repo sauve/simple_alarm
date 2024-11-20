@@ -561,6 +561,40 @@ void ConsoleManager::processCmd()
     myRTC.setMinute(10);
     myRTC.setSecond(0);
   }
+  else if (cmd.cmpCmd("gettimedate")==0)
+  {
+    // get datetime
+    bool h12Flag;
+    bool pmFlag;
+    bool century = false;
+    int year = myRTC.getYear();
+    int month = myRTC.getMonth(century);
+    int date = myRTC.getDate();
+    int dow = myRTC.getDoW();
+    int hour = myRTC.getHour(h12Flag, pmFlag);
+    int minute = myRTC.getMinute();
+    int second = myRTC.getSecond();
+    Serial.print("Date: ");
+    Serial.print(year);
+    Serial.print("-");
+    Serial.print(month);
+    Serial.print("-");
+    Serial.print(date);
+    Serial.print(" ");
+    Serial.print(dow);
+    Serial.print(" ");
+    Serial.print(hour);
+    Serial.print(":");
+    Serial.print(minute);
+    Serial.print(":");
+    Serial.print(second);
+    Serial.println();
+  }
+  else if (cmd.cmpCmd("setalarm1")==0)
+  {
+    // set alarm 1
+    Serial.println("commande setalarm1");
+  }
   else if (cmd.cmpCmd("fade")==0)
   {
     // set alarm 1
@@ -697,6 +731,7 @@ void loop() {
   EtatCourant->HandleButtons();
   EtatCourant->HandleState();
 
+  // mise a jour du son
   speaker.update();
 
   // Affiche selon l'etat
@@ -705,6 +740,7 @@ void loop() {
   // 7 segment update
   display.update();
 
+  // gestion des commande via serial
   console.Update();
 
   // delai selon peut-etre millis ?
