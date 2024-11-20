@@ -395,6 +395,102 @@ void GestionAfficheHeure::HandleState()
 
 GestionAfficheHeure EtatAfficheHeure;
 
+class CommandString
+{
+public:
+  void clear();
+  void addChar(char c);
+
+  // assignation a partir d'une chaine
+
+  // retourne le nom de la commande
+  // compare si c'est la commande
+  int cmpCmd( const char* cmd)
+  {
+    return strncmp(buffer, cmd, cmdlen);
+  }
+  // retourne le nombre d'argument
+  // retourne l'argument a l'index
+  // retourne l'argument en tant que int
+
+  void debugPrint();
+
+protected:
+  char buffer[64];
+  int index;
+  int cmdlen;
+  int nbrarg;
+  int argstart[4];
+  int arglen[4];
+};
+
+void CommandString::clear()
+{
+  cmdlen = 0;
+  nbrarg = 0;
+  for (int i = 0; i < 64; i++)
+  {
+    buffer[i] = 0;
+  }
+  index = 0;
+  for (int i = 0; i < 4; i++)
+  {
+    argstart[i] = 0;
+    arglen[i] = 0;
+  }
+}
+
+void CommandString::addChar( char c)
+{
+  // index 63 doit etre un 0 pour la fin de la chaine
+  if ( index < 62 )
+  {
+    buffer[index] = c;
+    index++;
+    // si c'est un 0??
+    // si c'est une virgule, ajoute un argument
+  
+    
+    if (c == ',')
+    {
+      argstart[nbrarg] = index;
+      nbrarg++;
+    }
+    else
+    {
+      if (nbrarg > 0)
+      {
+        arglen[nbrarg-1] = index - argstart[nbrarg-1];
+      }
+      else
+      {
+        cmdlen = index;
+      }
+    }
+  }
+}
+
+void CommandString::debugPrint()
+{
+  Serial.print("cmd: ");
+  for (int i = 0; i < cmdlen; i++)
+  {
+    Serial.print(buffer[i]);
+  }
+  Serial.println();
+  for (int i = 0; i < nbrarg; i++)
+  {
+    Serial.print("arg");
+    Serial.print(i);
+    Serial.print(": ");
+    for (int j = 0; j < arglen[i]; j++)
+    {
+      Serial.print(buffer[argstart[i]+j]);
+    }
+    Serial.println();
+  }
+}
+
 class ConsoleManager
 {
 public:
@@ -405,17 +501,14 @@ protected:
   // liste de commande supporte
   // set heure, date, alarmes, config
   // change state
-  char cmdbuffer[64];
-  int cmdindex;
+  CommandString cmd;
 
-  void clearBuffer();
-  void addCharCmd( char c);
   void processCmd();
 };
 
 void ConsoleManager::Setup()
 {
-  clearBuffer();
+  cmd.clear();
 }
 
 void ConsoleManager::Update()
@@ -431,11 +524,11 @@ void ConsoleManager::Update()
       // fin de ligne, execute la commande
       processCmd();
       // clear buffer
-      clearBuffer();
+      cmd.clear();
     }
     else
     {
-      addCharCmd( inChar);
+      cmd.addChar(inChar);
     }
   }
 
@@ -445,28 +538,10 @@ void ConsoleManager::Update()
 
 }
 
-void ConsoleManager::clearBuffer()
-{
-  for (int i = 0; i < 64; i++)
-  {
-    cmdbuffer[i] = 0;
-  }
-  cmdindex = 0;
-}
-
-void ConsoleManager::addCharCmd( char c)
-{
-  // index 63 doit etre un 0 pour la fin de la chaine
-  if ( cmdindex < 62 )
-  {
-    cmdbuffer[cmdindex] = c;
-    cmdindex++;
-  }
-}
-
 void ConsoleManager::processCmd()
 {
-  if (strcmp(cmdbuffer, "showtime")==0)
+  cmd.debugPrint();
+  if (cmd.cmpCmd("showtime")==0)
   {
     bool h12Flag;
     bool pmFlag;
@@ -474,7 +549,7 @@ void ConsoleManager::processCmd()
     int minute = myRTC.getMinute();
     tm.display(hour * 100 + minute); 
   }
-  else if (strcmp(cmdbuffer, "settime")==0)
+  else if (cmd.cmpCmd("settime")==0)
   {
     // set date
     myRTC.setClockMode(false);  // set to 24h
@@ -486,7 +561,7 @@ void ConsoleManager::processCmd()
     myRTC.setMinute(10);
     myRTC.setSecond(0);
   }
-  else if (strcmp(cmdbuffer, "fade")==0)
+  else if (cmd.cmpCmd("fade")==0)
   {
     // set alarm 1
     for (int i = 90; i >= 0; i -= 10)
@@ -498,26 +573,26 @@ void ConsoleManager::processCmd()
     }
     tm.setBrightnessPercent(90);
   }
-  else if (strcmp(cmdbuffer, "setalarm2")==0)
+  else if (cmd.cmpCmd("setalarm2")==0)
   {
     // set alarm 2
     Serial.println("commande setalarm2");
   }
-  else if (strcmp(cmdbuffer, "ledon")==0)
+  else if (cmd.cmpCmd("ledon")==0)
   {
     // config
     leds.SetPM( true, 1);
     leds.SetAlarm1( true, 10);
     leds.SetAlarm2( true, 128);
   }
-  else if (strcmp(cmdbuffer, "ledoff")==0)
+  else if (cmd.cmpCmd("ledoff")==0)
   {
     // state
     leds.SetPM( false, 0);
     leds.SetAlarm1( false, 0);
     leds.SetAlarm2( false, 0);
   }
-  else if (strcmp(cmdbuffer, "showtext")==0)
+  else if (cmd.cmpCmd("showtext")==0)
   {
     // state
     tm.display("lundi"); 
@@ -559,7 +634,7 @@ void ConsoleManager::processCmd()
     tm.display("deceHbre"); 
     delay(1000);
   }
-  else if (strcmp(cmdbuffer, "temp")==0)
+  else if (cmd.cmpCmd("temp")==0)
   {
     // state
     int temp = myRTC.getTemperature();
@@ -569,7 +644,6 @@ void ConsoleManager::processCmd()
   {
     // unknown command
     Serial.print("commande inconnue: ");
-    Serial.println(cmdbuffer);
   }
 }
   
