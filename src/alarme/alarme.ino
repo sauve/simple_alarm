@@ -4,6 +4,7 @@
 #include <DS3231.h>
 #include <Wire.h>
 #include <inttypes.h>
+#include <avr/pgmspace.h>
 
 // Module connection pins (Digital Pins)
 #define CLK 2
@@ -410,8 +411,24 @@ public:
     return strncmp(buffer, cmd, cmdlen);
   }
   // retourne le nombre d'argument
-  // retourne l'argument a l'index
+  int nbrArg()
+  {
+    return nbrarg;
+  }
+
+  // compare l'argument a l'index
+  int cmpArg( int index, const char* arg)
+  {
+    if (index >= nbrarg) return 1;
+    return strncmp(buffer + argstart[index], arg, arglen[index]);
+  }
+
   // retourne l'argument en tant que int
+  int getArgInt( int index)
+  {
+    if (index >= nbrarg) return 0;
+    return atoi(buffer + argstart[index]);
+  }
 
   void debugPrint();
 
@@ -447,12 +464,11 @@ void CommandString::addChar( char c)
   {
     buffer[index] = c;
     index++;
-    // si c'est un 0??
-    // si c'est une virgule, ajoute un argument
-  
-    
+
+    // si c'est une virgule, ajoute un argument, sinon augmente la taille de nom de la commande ou de l'argument courant
     if (c == ',')
     {
+      buffer[index-1] = '\0';
       argstart[nbrarg] = index;
       nbrarg++;
     }
