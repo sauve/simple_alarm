@@ -568,14 +568,39 @@ void ConsoleManager::processCmd()
   else if (cmd.cmpCmd("settime")==0)
   {
     // set date
-    myRTC.setClockMode(false);  // set to 24h
-    myRTC.setYear(24);
-    myRTC.setMonth(11);
-    myRTC.setDate(18);
-    myRTC.setDoW(2);
-    myRTC.setHour(20);
-    myRTC.setMinute(10);
-    myRTC.setSecond(0);
+    if ( cmd.nbrArg() == 3 )
+    {
+      int hour = cmd.getArgInt(0);
+      int minute = cmd.getArgInt(1);
+      int seconde = cmd.getArgInt(2);
+      myRTC.setClockMode(false);  // set to 24h
+      myRTC.setHour(hour);
+      myRTC.setMinute(minute);
+      myRTC.setSecond(seconde);
+    }
+    else
+    {
+      Serial.println("pas assez arg pour settime");
+    }
+  }
+  else if (cmd.cmpCmd("setdate")==0)
+  {
+    // set date
+    if ( cmd.nbrArg() == 4 )
+    {
+      int year = cmd.getArgInt(0);
+      int month = cmd.getArgInt(1);
+      int day = cmd.getArgInt(2);
+      int dow = cmd.getArgInt(3);
+      myRTC.setYear(year);
+      myRTC.setMonth(month);
+      myRTC.setDate(day);
+      myRTC.setDoW(dow);
+    }
+    else
+    {
+      Serial.println("pas assez arg pour setdate");
+    }
   }
   else if (cmd.cmpCmd("gettimedate")==0)
   {
@@ -606,6 +631,33 @@ void ConsoleManager::processCmd()
     Serial.print(second);
     Serial.println();
   }
+  else if (cmd.cmpCmd("getalarm1")==0)
+  {
+    bool pmFlag;
+    byte alarmDay, alarmHour, alarmMinute, alarmSecond, alarmBits;
+    bool alarmDy, alarmH12Flag, alarmPmFlag;
+    myRTC.getA1Time(alarmDay, alarmHour, alarmMinute, alarmSecond, alarmBits, alarmDy, alarmH12Flag, alarmPmFlag);
+    Serial.print("Alarm 1: ");
+    if (myRTC.checkAlarmEnabled(1)) {
+      Serial.print(" on ");
+    }
+    Serial.print(alarmHour);
+    Serial.print(":");
+    Serial.print(alarmMinute);
+    Serial.print(":");
+    Serial.print(alarmSecond);
+    if (alarmH12Flag)
+    {
+      if(alarmPmFlag)
+        Serial.print(" PM ");
+      else
+        Serial.print(" AM ");
+    }
+    if (myRTC.checkIfAlarm(1)) {
+      Serial.print(" A1!");
+    }
+    Serial.println();
+  }
   else if (cmd.cmpCmd("setalarm1")==0)
   {
     // set alarm 1
@@ -622,6 +674,33 @@ void ConsoleManager::processCmd()
       
     }
     tm.setBrightnessPercent(90);
+  }
+  else if (cmd.cmpCmd("getalarm2")==0)
+  {
+    bool pmFlag;
+    byte alarmDay, alarmHour, alarmMinute, alarmSecond, alarmBits;
+    bool alarmDy, alarmH12Flag, alarmPmFlag;
+    myRTC.getA2Time(alarmDay, alarmHour, alarmMinute, alarmBits, alarmDy, alarmH12Flag, alarmPmFlag);
+    Serial.print("Alarm 2: ");
+    if (myRTC.checkAlarmEnabled(2)) {
+      Serial.print(" on ");
+    }
+    Serial.print(alarmHour);
+    Serial.print(":");
+    Serial.print(alarmMinute);
+    Serial.print(":");
+    Serial.print(alarmSecond);
+    if (alarmH12Flag)
+    {
+      if(alarmPmFlag)
+        Serial.print(" PM ");
+      else
+        Serial.print(" AM ");
+    }
+    if (myRTC.checkIfAlarm(1)) {
+      Serial.print(" A2!");
+    }
+    Serial.println();
   }
   else if (cmd.cmpCmd("setalarm2")==0)
   {
