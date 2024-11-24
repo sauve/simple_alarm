@@ -31,6 +31,25 @@
 #define BTN_MOINS   0b00000100
 #define BTN_OK    0b00001000
 
+
+/// command string
+const char showtime_cmdstr[] PROGMEM = {"showtime"};
+const char settime_cmdstr[] PROGMEM = {"settime"};
+const char setdate_cmdstr[] PROGMEM = {"setdate"};
+const char gettimedate_cmdstr[] PROGMEM = {"gettimedate"};
+const char getalarm1_cmdstr[] PROGMEM = {"getalarm1"};
+const char setalarm1_cmdstr[] PROGMEM = {"setalarm1"};
+const char fade_cmdstr[] PROGMEM = {"fade"};
+const char getalarm2_cmdstr[] PROGMEM = {"getalarm2"};
+const char setalarm2_cmdstr[] PROGMEM = {"setalarm2"};
+const char ledon_cmdstr[] PROGMEM = {"ledon"};
+const char ledoff_cmdstr[] PROGMEM = {"ledoff"};
+const char showtext_cmdstr[] PROGMEM = {"showtext"};
+const char temp_cmdstr[] PROGMEM = {"temp"};
+const char beep_cmdstr[] PROGMEM = {"beep"};
+
+
+
 class GestionEtat
 {
   public:
@@ -306,6 +325,7 @@ class SpeakerSequencer
 
     void Beep( int tone, int duration);
   protected:
+    bool hascommand;
     int curtone;
     int stopTime;
 };
@@ -320,11 +340,17 @@ void SpeakerSequencer::update()
 {
   // regarde le temps ecouler et set le tone selon la commande
   // avance a la prochaine commande
+  if (hascommand)
+  {
+    hascommand = false;
+    tone(SPEAKER_PIN, curtone, 500);
+  }
 }
 
 void SpeakerSequencer::Beep(int tone, int duration)
 {
   // set le tone et quand l'arreter
+  hascommand = true;
   curtone = tone;
   stopTime = millis() + duration;
 }
@@ -394,7 +420,16 @@ void GestionAfficheHeure::HandleState()
     bool pmFlag;
     int hour = myRTC.getHour(h12Flag, pmFlag);
     int minute = myRTC.getMinute();
+    int seconde = myRTC.getSecond();
     int temp = hour * 100 + minute;
+    if ( (seconde % 2) == 0)
+    {
+      tm.colonOff();
+    } 
+    else
+    {
+      tm.colonOn();
+    }
     tm.display(temp); 
 
     // set la led pm
@@ -433,6 +468,12 @@ public:
   int cmpCmd( const char* cmd)
   {
     return strncmp(buffer, cmd, cmdlen);
+  }
+
+  // compare le nom de la commande avec un string en PROGMEM
+  int cmpCmd_P( const char* cmd)
+  {
+    return strcmp_P(buffer, cmd);
   }
   // retourne le nombre d'argument
   int nbrArg()
@@ -581,7 +622,7 @@ void ConsoleManager::Update()
 void ConsoleManager::processCmd()
 {
   cmd.debugPrint();
-  if (cmd.cmpCmd("showtime")==0)
+  if (cmd.cmpCmd_P(showtime_cmdstr)==0)
   {
     bool h12Flag;
     bool pmFlag;
@@ -589,7 +630,7 @@ void ConsoleManager::processCmd()
     int minute = myRTC.getMinute();
     tm.display(hour * 100 + minute); 
   }
-  else if (cmd.cmpCmd("settime")==0)
+  else if (cmd.cmpCmd_P(settime_cmdstr)==0)
   {
     // set date
     if ( cmd.nbrArg() == 3 )
@@ -607,7 +648,7 @@ void ConsoleManager::processCmd()
       Serial.println(F("pas assez arg pour settime"));
     }
   }
-  else if (cmd.cmpCmd("setdate")==0)
+  else if (cmd.cmpCmd_P(setdate_cmdstr)==0)
   {
     // set date
     if ( cmd.nbrArg() == 4 )
@@ -626,7 +667,7 @@ void ConsoleManager::processCmd()
       Serial.println(F("pas assez arg pour setdate"));
     }
   }
-  else if (cmd.cmpCmd("gettimedate")==0)
+  else if (cmd.cmpCmd_P(gettimedate_cmdstr)==0)
   {
     // get datetime
     bool h12Flag;
@@ -655,7 +696,7 @@ void ConsoleManager::processCmd()
     Serial.print(second);
     Serial.println();
   }
-  else if (cmd.cmpCmd("getalarm1")==0)
+  else if (cmd.cmpCmd_P(getalarm1_cmdstr)==0)
   {
     bool pmFlag;
     byte alarmDay, alarmHour, alarmMinute, alarmSecond, alarmBits;
@@ -682,12 +723,12 @@ void ConsoleManager::processCmd()
     }
     Serial.println();
   }
-  else if (cmd.cmpCmd("setalarm1")==0)
+  else if (cmd.cmpCmd_P(setalarm1_cmdstr)==0)
   {
     // set alarm 1
     Serial.println(F("commande setalarm1"));
   }
-  else if (cmd.cmpCmd("fade")==0)
+  else if (cmd.cmpCmd_P(fade_cmdstr)==0)
   {
     // set alarm 1
     for (int i = 90; i >= 0; i -= 10)
@@ -699,7 +740,7 @@ void ConsoleManager::processCmd()
     }
     tm.setBrightnessPercent(90);
   }
-  else if (cmd.cmpCmd("getalarm2")==0)
+  else if (cmd.cmpCmd_P(getalarm2_cmdstr)==0)
   {
     bool pmFlag;
     byte alarmDay, alarmHour, alarmMinute, alarmSecond, alarmBits;
@@ -726,26 +767,26 @@ void ConsoleManager::processCmd()
     }
     Serial.println();
   }
-  else if (cmd.cmpCmd("setalarm2")==0)
+  else if (cmd.cmpCmd_P(setalarm2_cmdstr)==0)
   {
     // set alarm 2
     Serial.println(F("commande setalarm2"));
   }
-  else if (cmd.cmpCmd("ledon")==0)
+  else if (cmd.cmpCmd_P(ledon_cmdstr)==0)
   {
     // config
     leds.SetPM( true, 1);
     leds.SetAlarm1( true, 10);
     leds.SetAlarm2( true, 128);
   }
-  else if (cmd.cmpCmd("ledoff")==0)
+  else if (cmd.cmpCmd_P(ledoff_cmdstr)==0)
   {
     // state
     leds.SetPM( false, 0);
     leds.SetAlarm1( false, 0);
     leds.SetAlarm2( false, 0);
   }
-  else if (cmd.cmpCmd("showtext")==0)
+  else if (cmd.cmpCmd_P(showtext_cmdstr)==0)
   {
     // state
     tm.display("lundi"); 
@@ -787,13 +828,13 @@ void ConsoleManager::processCmd()
     tm.display("deceHbre"); 
     delay(1000); 
   }
-  else if (cmd.cmpCmd("temp")==0)
+  else if (cmd.cmpCmd_P(temp_cmdstr)==0)
   {
     // state
     int temp = myRTC.getTemperature();
     tm.display(temp);
   }
-  else if (cmd.cmpCmd("beep")==0)
+  else if (cmd.cmpCmd_P(beep_cmdstr)==0)
   {
     speaker.Beep(1000, 500);
   }
