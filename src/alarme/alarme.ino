@@ -360,21 +360,21 @@ void GestionAfficheHeure::HandleButtons()
     if (  isPressed( BTN_OK) )
     {
       // Change l'etat
-      Serial.println("Config Date");
+      Serial.println(F("Config Date"));
     }
     else if ( isPressed( BTN_PLUS) )
     {
       // Change l'etat
-      Serial.println("Config Alarme 1");
+      Serial.println(F("Config Alarme 1"));
     }
     else if ( isPressed( BTN_MOINS) )
     {
       // Change l'etat
-      Serial.println("Config Alarme 2");
+      Serial.println(F("Config Alarme 2"));
     }
     else
     {
-      Serial.println("Config Heure");
+      Serial.println(F("Config Heure"));
     }
   }
 }
@@ -382,8 +382,13 @@ void GestionAfficheHeure::HandleButtons()
 void GestionAfficheHeure::HandleState()
 {
   // affiche l'heure
-  if ( curUpdateTime - lastUpdate > 1000 )
+  if ( curUpdateTime - lastUpdate > 500 )
   {
+    // regarde si les alarme ont ete activer
+
+    // Si oui, change l'eta et appel update
+
+    // sinon update l'heure 
     lastUpdate = curUpdateTime;
     bool h12Flag;
     bool pmFlag;
@@ -391,6 +396,25 @@ void GestionAfficheHeure::HandleState()
     int minute = myRTC.getMinute();
     int temp = hour * 100 + minute;
     tm.display(temp); 
+
+    // set la led pm
+    if (pmFlag)
+    {
+      leds.SetPM(true, 0);
+    }
+
+    // set les les selon l'alarme
+    if (myRTC.checkAlarmEnabled(1))
+    {
+      // Si snooze, update la led freq de l'alarme
+      leds.SetAlarm1(true, 0);
+    }
+    
+    if (myRTC.checkAlarmEnabled(2))
+    {
+      leds.SetAlarm2(true, 0);
+    }
+    
   }
 }
 
@@ -580,7 +604,7 @@ void ConsoleManager::processCmd()
     }
     else
     {
-      Serial.println("pas assez arg pour settime");
+      Serial.println(F("pas assez arg pour settime"));
     }
   }
   else if (cmd.cmpCmd("setdate")==0)
@@ -599,7 +623,7 @@ void ConsoleManager::processCmd()
     }
     else
     {
-      Serial.println("pas assez arg pour setdate");
+      Serial.println(F("pas assez arg pour setdate"));
     }
   }
   else if (cmd.cmpCmd("gettimedate")==0)
@@ -661,7 +685,7 @@ void ConsoleManager::processCmd()
   else if (cmd.cmpCmd("setalarm1")==0)
   {
     // set alarm 1
-    Serial.println("commande setalarm1");
+    Serial.println(F("commande setalarm1"));
   }
   else if (cmd.cmpCmd("fade")==0)
   {
@@ -705,7 +729,7 @@ void ConsoleManager::processCmd()
   else if (cmd.cmpCmd("setalarm2")==0)
   {
     // set alarm 2
-    Serial.println("commande setalarm2");
+    Serial.println(F("commande setalarm2"));
   }
   else if (cmd.cmpCmd("ledon")==0)
   {
@@ -726,7 +750,7 @@ void ConsoleManager::processCmd()
     // state
     tm.display("lundi"); 
     delay(1000);
-    tm.display("Hardi"); 
+   tm.display("Hardi"); 
     delay(1000);
     tm.display("Hercredi"); 
     delay(1000);
@@ -754,14 +778,14 @@ void ConsoleManager::processCmd()
     delay(1000);
     tm.display("aout"); 
     delay(1000);
-    tm.display("septeHbre"); 
+    tm.display("septeHbre")     ; 
     delay(1000);
     tm.display("octobre"); 
     delay(1000);
     tm.display("nouehbre"); 
     delay(1000);
     tm.display("deceHbre"); 
-    delay(1000);
+    delay(1000); 
   }
   else if (cmd.cmpCmd("temp")==0)
   {
@@ -769,10 +793,14 @@ void ConsoleManager::processCmd()
     int temp = myRTC.getTemperature();
     tm.display(temp);
   }
+  else if (cmd.cmpCmd("beep")==0)
+  {
+    speaker.Beep(1000, 500);
+  }
   else
   {
     // unknown command
-    Serial.print("commande inconnue: ");
+    Serial.print(F("commande inconnue: "));
   }
 }
   
@@ -799,7 +827,15 @@ void setup() {
 
   // initialisation Afficheur 7 segment
   tm.begin();
-  tm.setBrightnessPercent(90);
+  tm.colonOn();
+  for (int i=0; i<9; i++)
+  {
+    tm.setBrightness(i);
+    tm.display(i);
+    delay(500);
+  }
+  tm.setBrightness(5);
+  
   display.setup();
   
   // Initialisation module RTC
@@ -810,7 +846,7 @@ void setup() {
   // Etat initiale
   EtatCourant = &EtatAfficheHeure;
 
-  Serial.println("Initialisation complete");
+  Serial.println(F("Initialisation complete"));
 }
 
 

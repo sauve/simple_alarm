@@ -11,7 +11,8 @@
 + Commande via serial
   + Permettre la configuration et la lecture d'information via des commande USB
     + time, date, alarne 1 et 2
-  + Utiliser des comparaison en PORGMEM pour optimiser l'utilisation de la RAM
+    + test speaker
+  + Utiliser des comparaison en PROGMEM pour optimiser l'utilisation de la RAM
 + Multiple handler
   + Ajout du setting de l'heure
 + Gestion simple du speaker
