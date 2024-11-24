@@ -4,7 +4,7 @@
 #include <DS3231.h>
 #include <Wire.h>
 #include <inttypes.h>
-#include <avr/pgmspace.h>
+#include "commandstring.h"
 
 // Module connection pins (Digital Pins)
 #define CLK 2
@@ -454,123 +454,6 @@ void GestionAfficheHeure::HandleState()
 }
 
 GestionAfficheHeure EtatAfficheHeure;
-
-class CommandString
-{
-public:
-  void clear();
-  void addChar(char c);
-
-  // assignation a partir d'une chaine
-
-  // retourne le nom de la commande
-  // compare si c'est la commande
-  int cmpCmd( const char* cmd)
-  {
-    return strncmp(buffer, cmd, cmdlen);
-  }
-
-  // compare le nom de la commande avec un string en PROGMEM
-  int cmpCmd_P( const char* cmd)
-  {
-    return strcmp_P(buffer, cmd);
-  }
-  // retourne le nombre d'argument
-  int nbrArg()
-  {
-    return nbrarg;
-  }
-
-  // compare l'argument a l'index
-  int cmpArg( int index, const char* arg)
-  {
-    if (index >= nbrarg) return 1;
-    return strncmp(buffer + argstart[index], arg, arglen[index]);
-  }
-
-  // retourne l'argument en tant que int
-  int getArgInt( int index)
-  {
-    if (index >= nbrarg) return 0;
-    return atoi(buffer + argstart[index]);
-  }
-
-  void debugPrint();
-
-protected:
-  char buffer[64];
-  int index;
-  int cmdlen;
-  int nbrarg;
-  int argstart[4];
-  int arglen[4];
-};
-
-void CommandString::clear()
-{
-  cmdlen = 0;
-  nbrarg = 0;
-  for (int i = 0; i < 64; i++)
-  {
-    buffer[i] = 0;
-  }
-  index = 0;
-  for (int i = 0; i < 4; i++)
-  {
-    argstart[i] = 0;
-    arglen[i] = 0;
-  }
-}
-
-void CommandString::addChar( char c)
-{
-  // index 63 doit etre un 0 pour la fin de la chaine
-  if ( index < 62 )
-  {
-    buffer[index] = c;
-    index++;
-
-    // si c'est une virgule, ajoute un argument, sinon augmente la taille de nom de la commande ou de l'argument courant
-    if (c == ',')
-    {
-      buffer[index-1] = '\0';
-      argstart[nbrarg] = index;
-      nbrarg++;
-    }
-    else
-    {
-      if (nbrarg > 0)
-      {
-        arglen[nbrarg-1] = index - argstart[nbrarg-1];
-      }
-      else
-      {
-        cmdlen = index;
-      }
-    }
-  }
-}
-
-void CommandString::debugPrint()
-{
-  Serial.print("cmd: ");
-  for (int i = 0; i < cmdlen; i++)
-  {
-    Serial.print(buffer[i]);
-  }
-  Serial.println();
-  for (int i = 0; i < nbrarg; i++)
-  {
-    Serial.print("arg");
-    Serial.print(i);
-    Serial.print(": ");
-    for (int j = 0; j < arglen[i]; j++)
-    {
-      Serial.print(buffer[argstart[i]+j]);
-    }
-    Serial.println();
-  }
-}
 
 class ConsoleManager
 {

@@ -4,10 +4,7 @@
   ## Proto 2
 
 + Meilleure librairie pour le 7 segments
-  + Flash
-  + luminosité
-  + gestion du :
-  + Scroll du texte
+  + Utilisation de la meme finalement
 + Commande via serial
   + Permettre la configuration et la lecture d'information via des commande USB
     + time, date, alarne 1 et 2
