@@ -5,9 +5,10 @@
 #define CLK 2
 #define DIO 3
 
-class DisplaySeuqencer
+class DisplaySequencer
 {
   public:
+    DisplaySequencer() : tm(CLK, DIO) {}
     void setup();
     void update();
 
@@ -26,7 +27,7 @@ class DisplaySeuqencer
     void Clear();
 
   protected:
-    TM1637 tm(CLK, DIO);
+    TM1637 tm;
     int lastFlash = 0;
     bool flashDroit = false;
     bool flashGauche = false;

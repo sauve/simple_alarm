@@ -102,7 +102,7 @@ bool isPressed( uint8_t button)
   return (btnpressed & button) != 0;
 }
 
-DisplaySeuqencer display;
+DisplaySequencer display;
 
 LEDSequencer leds;
 
@@ -474,6 +474,7 @@ void ConsoleManager::processCmd()
   {
     // unknown command
     Serial.print(F("commande inconnue: "));
+    
   }
 }
   

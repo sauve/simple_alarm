@@ -1,7 +1,7 @@
 #include "displaysequencer.h"
 
 
-void DisplaySeuqencer::setup()
+void DisplaySequencer::setup()
 {
   // va lire la luminosite en EEPROM
   // initialise le display et la comm
@@ -17,7 +17,7 @@ void DisplaySeuqencer::setup()
   }
 }
 
-void DisplaySeuqencer::update()
+void DisplaySequencer::update()
 {
   // valid flash
   // si mise a jour
@@ -25,7 +25,7 @@ void DisplaySeuqencer::update()
 }
 
 
-void DisplaySeuqencer::ChangeLuminosite(byte luminosite)
+void DisplaySequencer::ChangeLuminosite(byte luminosite)
 {
   // update selon difference en parametre
   // set en EEPROM
@@ -34,18 +34,18 @@ void DisplaySeuqencer::ChangeLuminosite(byte luminosite)
 }
 
 
-void DisplaySeuqencer::FlashDeuxPoints()
+void DisplaySequencer::FlashDeuxPoints()
 {}
 
 
-void DisplaySeuqencer::FlashChiffreDroit()
+void DisplaySequencer::FlashChiffreDroit()
 {}
 
-void DisplaySeuqencer::FlashChiffreGauche()
+void DisplaySequencer::FlashChiffreGauche()
 {}
 
 
-void DisplaySeuqencer::DeuxPointsOn(bool on)
+void DisplaySequencer::DeuxPointsOn(bool on)
 {
   // set les deux points
   // set le flag pour mise a jour
@@ -55,38 +55,38 @@ void DisplaySeuqencer::DeuxPointsOn(bool on)
     tm.colonOff();
 }
 
-void DisplaySeuqencer::AfficheHeure(int heure, int minute)
+void DisplaySequencer::AfficheHeure(int heure, int minute)
 {
     // set les valeurs
     // set le flag pour mise a jour
     tm.display(heure * 100 + minute);
 }
 
-void DisplaySeuqencer::Affiche(int valeur)
+void DisplaySequencer::Affiche(int valeur)
 {
     // set les valeurs
     // set le flag pour mise a jour
     tm.display(valeur);
 }
 
-void DisplaySeuqencer::Affiche(const char* valeur)
+void DisplaySequencer::Affiche(const char* valeur)
 {
     // set les valeurs
     // set le flag pour mise a jour
     tm.display(valeur);
 }
 
-void DisplaySeuqencer::Affiche_P(const char* valeur)
+void DisplaySequencer::Affiche_P(const char* valeur)
 {
     // set les valeurs
     // set le flag pour mise a jour
     strcpy_P(buffer, valeur);
-    tm.display(buffer);
+    tm.display((const char*)buffer);
 }
 
-void DisplaySeuqencer::Clear()
+void DisplaySequencer::Clear()
 {
     // clear le display
     // set le flag pour mise a jour
-    tm.clear();
+    //tm.clear();
 }
