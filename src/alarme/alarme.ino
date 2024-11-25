@@ -1,16 +1,13 @@
 // Simple Alarme
 
-#include <TM1637.h>
 #include <DS3231.h>
 #include <Wire.h>
 #include <inttypes.h>
 #include "commandstring.h"
 #include "ledsequencer.h"
 #include "speakersequencer.h"
+#include "displaysequencer.h"
 
-// Module connection pins (Digital Pins)
-#define CLK 2
-#define DIO 3
 
 // Defines pour les pins
 #define BTN_CONF_PIN  A0
@@ -55,7 +52,6 @@ class GestionEtat
 
 unsigned long lastUpdateTime = 0;
 unsigned long curUpdateTime = 0;
-TM1637 tm(CLK, DIO);
 DS3231 myRTC;
 GestionEtat* EtatCourant = nullptr;
 
@@ -105,74 +101,6 @@ bool isPressed( uint8_t button)
 {
   return (btnpressed & button) != 0;
 }
-
-class DisplaySeuqencer
-{
-  public:
-    void setup();
-    void update();
-
-    
-    void ChangeLuminosite();
-    void FlashDeuxPoints();
-    void FlashChiffreDroit();
-    void FlashChiffreGauche();
-
-
-    void AfficheHeure();
-    
-  protected:
-    int lastFlash = 0;
-    bool flashDroit = false;
-    bool flashGauche = false;
-    bool flashCentre = false;
-    
-    // valeur affichage
-    // devrait avoir le display ici, tout passe par le sequenceur
-    // Flash pourrait etre plus un fade ou hard flash
-};
-
-void DisplaySeuqencer::setup()
-{
-  // va lire la luminosite en EEPROM
-  // initialise le display et la comm
-  // clear display par defaut
-}
-
-void DisplaySeuqencer::update()
-{
-  // valid flash
-  // si mise a jour
-  // update display
-}
-
-
-void DisplaySeuqencer::ChangeLuminosite()
-{
-  // update selon difference en parametre
-  // set en EEPROM
-  // set update
-}
-
-
-void DisplaySeuqencer::FlashDeuxPoints()
-{}
-
-
-void DisplaySeuqencer::FlashChiffreDroit()
-{}
-
-void DisplaySeuqencer::FlashChiffreGauche()
-{}
-
-
-void DisplaySeuqencer::AfficheHeure()
-{
-  // selon 12/24 ou non
-  // set les valeur d'affichage
-  // set le flag pour mise a jour
-}
-
 
 DisplaySeuqencer display;
 
@@ -243,16 +171,15 @@ void GestionAfficheHeure::HandleState()
     int hour = myRTC.getHour(h12Flag, pmFlag);
     int minute = myRTC.getMinute();
     int seconde = myRTC.getSecond();
-    int temp = hour * 100 + minute;
     if ( (seconde % 2) == 0)
     {
-      tm.colonOff();
+      display.DeuxPointsOn(false);
     } 
     else
     {
-      tm.colonOn();
+      display.DeuxPointsOn(true);
     }
-    tm.display(temp); 
+    display.AfficheHeure(hour, minute);
 
     // set la led pm
     if (pmFlag)
@@ -333,7 +260,7 @@ void ConsoleManager::processCmd()
     bool pmFlag;
     int hour = myRTC.getHour(h12Flag, pmFlag);
     int minute = myRTC.getMinute();
-    tm.display(hour * 100 + minute); 
+    display.AfficheHeure(hour, minute);
   }
   else if (cmd.cmpCmd_P(settime_cmdstr)==0)
   {
@@ -436,14 +363,14 @@ void ConsoleManager::processCmd()
   else if (cmd.cmpCmd_P(fade_cmdstr)==0)
   {
     // set alarm 1
-    for (int i = 90; i >= 0; i -= 10)
+    for (int i = 8; i >= 0; i -= 1)
     {
-      tm.setBrightnessPercent(i);
-      tm.display("fade");
+      display.ChangeLuminosite(i);
+      display.Affiche("fade");
       delay(100);
       
     }
-    tm.setBrightnessPercent(90);
+    display.ChangeLuminosite(5);
   }
   else if (cmd.cmpCmd_P(getalarm2_cmdstr)==0)
   {
@@ -494,50 +421,50 @@ void ConsoleManager::processCmd()
   else if (cmd.cmpCmd_P(showtext_cmdstr)==0)
   {
     // state
-    tm.display("lundi"); 
+    display.Affiche("lundi"); 
     delay(1000);
-   tm.display("Hardi"); 
+   display.Affiche("Hardi"); 
     delay(1000);
-    tm.display("Hercredi"); 
+    display.Affiche("Hercredi"); 
     delay(1000);
-    tm.display("jeudi"); 
+    display.Affiche("jeudi"); 
     delay(1000);
-    tm.display("uendredi"); 
+    display.Affiche("uendredi"); 
     delay(1000);
-    tm.display("saHedi"); 
+    display.Affiche("saHedi"); 
     delay(1000);
-    tm.display("diHanche"); 
+    display.Affiche("diHanche"); 
     delay(1000);
-    tm.display("januier"); 
+    display.Affiche("januier"); 
     delay(1000);
-    tm.display("feurier"); 
+    display.Affiche("feurier"); 
     delay(1000);
-    tm.display("Hars"); 
+    display.Affiche("Hars"); 
     delay(1000);
-    tm.display("auril"); 
+    display.Affiche("auril"); 
     delay(1000);
-    tm.display("Hai"); 
+    display.Affiche("Hai"); 
     delay(1000);
-    tm.display("juin"); 
+    display.Affiche("juin"); 
     delay(1000);
-    tm.display("juillet"); 
+    display.Affiche("juillet"); 
     delay(1000);
-    tm.display("aout"); 
+    display.Affiche("aout"); 
     delay(1000);
-    tm.display("septeHbre")     ; 
+    display.Affiche("septeHbre")     ; 
     delay(1000);
-    tm.display("octobre"); 
+    display.Affiche("octobre"); 
     delay(1000);
-    tm.display("nouehbre"); 
+    display.Affiche("nouehbre"); 
     delay(1000);
-    tm.display("deceHbre"); 
+    display.Affiche("deceHbre"); 
     delay(1000); 
   }
   else if (cmd.cmpCmd_P(temp_cmdstr)==0)
   {
     // state
     int temp = myRTC.getTemperature();
-    tm.display(temp);
+    display.Affiche(temp);
   }
   else if (cmd.cmpCmd_P(beep_cmdstr)==0)
   {
@@ -559,9 +486,9 @@ void setup() {
   pinMode(BTN_MOINS_PIN, INPUT_PULLUP);
   pinMode(BTN_OK_PIN, INPUT_PULLUP);
 
-  console.Setup();
   Serial.begin(9600);
-
+  console.Setup();
+  
   // pinmode pour les LED
   leds.setup();
   leds.SetPM( false, 1);
@@ -570,18 +497,13 @@ void setup() {
 
   // inititalisation speaker
   speaker.setup();
-
-  // initialisation Afficheur 7 segment
-  tm.begin();
-  tm.colonOn();
-  tm.setBrightness(5);
   
   display.setup();
   
   // Initialisation module RTC
   Wire.begin();
   int temp = myRTC.getTemperature();
-  tm.display(temp); 
+  display.Affiche(temp); 
 
   // Etat initiale
   EtatCourant = &EtatAfficheHeure;
