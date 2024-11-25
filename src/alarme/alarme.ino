@@ -6,6 +6,7 @@
 #include <inttypes.h>
 #include "commandstring.h"
 #include "ledsequencer.h"
+#include "speakersequencer.h"
 
 // Module connection pins (Digital Pins)
 #define CLK 2
@@ -17,9 +18,6 @@
 #define BTN_MOINS_PIN  A2
 #define BTN_OK_PIN  A3
 
-
-// SPEAKER PIN
-#define SPEAKER_PIN 9
 
 
 // button bit constant
@@ -179,46 +177,6 @@ void DisplaySeuqencer::AfficheHeure()
 DisplaySeuqencer display;
 
 LEDSequencer leds;
-
-
-class SpeakerSequencer
-{
-  public:
-    void setup();
-    void update();
-
-    void Beep( int tone, int duration);
-  protected:
-    bool hascommand;
-    int curtone;
-    int stopTime;
-};
-
-
-void SpeakerSequencer::setup()
-{
-  pinMode(SPEAKER_PIN, OUTPUT);
-}
-
-void SpeakerSequencer::update()
-{
-  // regarde le temps ecouler et set le tone selon la commande
-  // avance a la prochaine commande
-  if (hascommand)
-  {
-    hascommand = false;
-    tone(SPEAKER_PIN, curtone, 500);
-  }
-}
-
-void SpeakerSequencer::Beep(int tone, int duration)
-{
-  // set le tone et quand l'arreter
-  hascommand = true;
-  curtone = tone;
-  stopTime = millis() + duration;
-}
-
 
 SpeakerSequencer speaker;
 
@@ -616,12 +574,6 @@ void setup() {
   // initialisation Afficheur 7 segment
   tm.begin();
   tm.colonOn();
-  for (int i=0; i<9; i++)
-  {
-    tm.setBrightness(i);
-    tm.display(i);
-    delay(500);
-  }
   tm.setBrightness(5);
   
   display.setup();
