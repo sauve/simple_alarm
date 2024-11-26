@@ -31,6 +31,8 @@ const char setdate_cmdstr[] PROGMEM = {"setdate"};
 const char gettimedate_cmdstr[] PROGMEM = {"gettimedate"};
 const char getalarm1_cmdstr[] PROGMEM = {"getalarm1"};
 const char setalarm1_cmdstr[] PROGMEM = {"setalarm1"};
+const char setalarm1on_cmdstr[] PROGMEM = {"setalarm1on"};
+const char clearalarm1_cmdstr[] PROGMEM = {"clearalarm1"};
 const char fade_cmdstr[] PROGMEM = {"fade"};
 const char getalarm2_cmdstr[] PROGMEM = {"getalarm2"};
 const char setalarm2_cmdstr[] PROGMEM = {"setalarm2"};
@@ -39,7 +41,9 @@ const char ledoff_cmdstr[] PROGMEM = {"ledoff"};
 const char showtext_cmdstr[] PROGMEM = {"showtext"};
 const char temp_cmdstr[] PROGMEM = {"temp"};
 const char beep_cmdstr[] PROGMEM = {"beep"};
-
+const char play_cmdstr[] PROGMEM = {"play"};
+const char stop_cmdstr[] PROGMEM = {"stop"};
+const char song_cmdstr[] PROGMEM = {"song"};
 
 
 class GestionEtat
@@ -191,12 +195,38 @@ void GestionAfficheHeure::HandleState()
     if (myRTC.checkAlarmEnabled(1))
     {
       // Si snooze, update la led freq de l'alarme
-      leds.SetAlarm1(true, 0);
+      if (myRTC.checkIfAlarm(1, false) )
+      {
+          leds.SetAlarm1(true, 24);
+          if ( speaker.isPlaying() == false )
+          {
+            speaker.Start();
+          }
+      }
+      else
+      {
+        leds.SetAlarm1(true, 0);
+      }
+    }
+    else
+    {
+      leds.SetAlarm1(false, 0);
     }
     
     if (myRTC.checkAlarmEnabled(2))
     {
-      leds.SetAlarm2(true, 0);
+      if (myRTC.checkIfAlarm(2, false) )
+      {
+          leds.SetAlarm2(true, 24);
+      }
+      else
+      {
+        leds.SetAlarm2(true, 0);
+      }
+    }
+    else
+    {
+      leds.SetAlarm2(false, 0);
     }
     
   }
@@ -359,6 +389,33 @@ void ConsoleManager::processCmd()
   {
     // set alarm 1
     Serial.println(F("commande setalarm1"));
+    int hour = cmd.getArgInt(0);
+    int minute = cmd.getArgInt(1);
+    myRTC.setA1Time(1, hour, minute, 0, 0b00001000, true, false, false);
+  }
+  else if (cmd.cmpCmd_P(setalarm1on_cmdstr)==0)
+  {
+    // set alarm 1
+    Serial.println(F("commande setalarm1on"));
+    int onoff = cmd.getArgInt(0);
+    if (onoff == 0)
+    {
+      myRTC.turnOffAlarm(1);
+    }
+    else
+    {
+      myRTC.turnOnAlarm(1);
+    }
+  }
+  else if (cmd.cmpCmd_P(clearalarm1_cmdstr)==0)
+  {
+    // set alarm 1
+    Serial.println(F("commande clearalarm1"));
+    myRTC.checkIfAlarm(1);
+    if ( speaker.isPlaying() == true )
+    {
+      speaker.Stop();
+    }
   }
   else if (cmd.cmpCmd_P(fade_cmdstr)==0)
   {
@@ -469,6 +526,19 @@ void ConsoleManager::processCmd()
   else if (cmd.cmpCmd_P(beep_cmdstr)==0)
   {
     speaker.Beep(1000, 500);
+  }
+  else if (cmd.cmpCmd_P(play_cmdstr)==0)
+  {
+    speaker.Start();
+  }
+  else if (cmd.cmpCmd_P(stop_cmdstr)==0)
+  {
+    speaker.Stop();
+  }
+  else if (cmd.cmpCmd_P(song_cmdstr)==0)
+  {
+    int song = cmd.getArgInt(0);
+    speaker.setSong(song);
   }
   else
   {
