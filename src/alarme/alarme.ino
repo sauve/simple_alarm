@@ -123,6 +123,16 @@ class GestionAfficheHeure : public GestionEtat
     unsigned long lastUpdate = 0; 
 };
 
+class GestionTestEtat : public GestionEtat
+{
+  public:
+    void HandleButtons();
+    void HandleState();
+};
+
+GestionAfficheHeure EtatAfficheHeure;
+GestionTestEtat EtatTestEtat;
+
 void GestionAfficheHeure::HandleButtons()
 {
   if ( justPressed(BTN_CONF) )
@@ -133,10 +143,15 @@ void GestionAfficheHeure::HandleButtons()
   {
     presedconf++;
   }
+  else
+  {
+    presedconf = 0;  
+  }
 
-  if( presedconf > 10 )
+  if( presedconf == 200 )
   {
     // si OK, Plus ou moins sont aussi appuyer
+    presedconf = 0;  
     if (  isPressed( BTN_OK) )
     {
       // Change l'etat
@@ -155,6 +170,7 @@ void GestionAfficheHeure::HandleButtons()
     else
     {
       Serial.println(F("Config Heure"));
+      EtatCourant = &EtatTestEtat;
     }
   }
 }
@@ -232,7 +248,20 @@ void GestionAfficheHeure::HandleState()
   }
 }
 
-GestionAfficheHeure EtatAfficheHeure;
+
+void GestionTestEtat::HandleButtons()
+{
+  if ( justPressed(BTN_CONF) )
+  {
+    EtatCourant = &EtatAfficheHeure;
+  }
+}
+
+void GestionTestEtat::HandleState()
+{
+  display.Affiche(8888);
+}
+
 
 class ConsoleManager
 {

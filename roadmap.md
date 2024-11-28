@@ -1,7 +1,20 @@
 # Roadmap
 
 
-  ## Proto 2
+## Proto 3
+
++ Gestion des 4 boutons
+  + Etat pour assignation de l'heure
+  + Etat pour assignation de la date
+  + Etat pour assignation alarme 1
++ Gestion de la config EEPROM
+  + luminosite avec changement sur + et -
+  + GEstion LED selon luminosite
++ Gestion animation et controle separe de l'affichage
+  + scrolling du texte
+  + flash gauche, droite, complet
+
+## Proto 2
 
 + Meilleure librairie pour le 7 segments
   + Utilisation de la meme finalement
