@@ -275,6 +275,72 @@ const int lulluby_melody[] PROGMEM = {
   
 };
 
+const int noel_melody[] PROGMEM = {
+  NOTE_C5,4, //1
+  NOTE_F5,4, NOTE_F5,8, NOTE_G5,8, NOTE_F5,8, NOTE_E5,8,
+  NOTE_D5,4, NOTE_D5,4, NOTE_D5,4,
+  NOTE_G5,4, NOTE_G5,8, NOTE_A5,8, NOTE_G5,8, NOTE_F5,8,
+  NOTE_E5,4, NOTE_C5,4, NOTE_C5,4,
+  NOTE_A5,4, NOTE_A5,8, NOTE_AS5,8, NOTE_A5,8, NOTE_G5,8,
+  NOTE_F5,4, NOTE_D5,4, NOTE_C5,8, NOTE_C5,8,
+  NOTE_D5,4, NOTE_G5,4, NOTE_E5,4,
+
+  NOTE_F5,2, NOTE_C5,4, //8 
+  NOTE_F5,4, NOTE_F5,8, NOTE_G5,8, NOTE_F5,8, NOTE_E5,8,
+  NOTE_D5,4, NOTE_D5,4, NOTE_D5,4,
+  NOTE_G5,4, NOTE_G5,8, NOTE_A5,8, NOTE_G5,8, NOTE_F5,8,
+  NOTE_E5,4, NOTE_C5,4, NOTE_C5,4,
+  NOTE_A5,4, NOTE_A5,8, NOTE_AS5,8, NOTE_A5,8, NOTE_G5,8,
+  NOTE_F5,4, NOTE_D5,4, NOTE_C5,8, NOTE_C5,8,
+  NOTE_D5,4, NOTE_G5,4, NOTE_E5,4,
+  NOTE_F5,2, NOTE_C5,4,
+
+  NOTE_F5,4, NOTE_F5,4, NOTE_F5,4,//17
+  NOTE_E5,2, NOTE_E5,4,
+  NOTE_F5,4, NOTE_E5,4, NOTE_D5,4,
+  NOTE_C5,2, NOTE_A5,4,
+  NOTE_AS5,4, NOTE_A5,4, NOTE_G5,4,
+  NOTE_C6,4, NOTE_C5,4, NOTE_C5,8, NOTE_C5,8,
+  NOTE_D5,4, NOTE_G5,4, NOTE_E5,4,
+  NOTE_F5,2, NOTE_C5,4, 
+  NOTE_F5,4, NOTE_F5,8, NOTE_G5,8, NOTE_F5,8, NOTE_E5,8,
+  NOTE_D5,4, NOTE_D5,4, NOTE_D5,4,
+  
+  NOTE_G5,4, NOTE_G5,8, NOTE_A5,8, NOTE_G5,8, NOTE_F5,8, //27
+  NOTE_E5,4, NOTE_C5,4, NOTE_C5,4,
+  NOTE_A5,4, NOTE_A5,8, NOTE_AS5,8, NOTE_A5,8, NOTE_G5,8,
+  NOTE_F5,4, NOTE_D5,4, NOTE_C5,8, NOTE_C5,8,
+  NOTE_D5,4, NOTE_G5,4, NOTE_E5,4,
+  NOTE_F5,2, NOTE_C5,4,
+  NOTE_F5,4, NOTE_F5,4, NOTE_F5,4,
+  NOTE_E5,2, NOTE_E5,4,
+  NOTE_F5,4, NOTE_E5,4, NOTE_D5,4,
+  
+  NOTE_C5,2, NOTE_A5,4,//36
+  NOTE_AS5,4, NOTE_A5,4, NOTE_G5,4,
+  NOTE_C6,4, NOTE_C5,4, NOTE_C5,8, NOTE_C5,8,
+  NOTE_D5,4, NOTE_G5,4, NOTE_E5,4,
+  NOTE_F5,2, NOTE_C5,4, 
+  NOTE_F5,4, NOTE_F5,8, NOTE_G5,8, NOTE_F5,8, NOTE_E5,8,
+  NOTE_D5,4, NOTE_D5,4, NOTE_D5,4,
+  NOTE_G5,4, NOTE_G5,8, NOTE_A5,8, NOTE_G5,8, NOTE_F5,8, 
+  NOTE_E5,4, NOTE_C5,4, NOTE_C5,4,
+  
+  NOTE_A5,4, NOTE_A5,8, NOTE_AS5,8, NOTE_A5,8, NOTE_G5,8,//45
+  NOTE_F5,4, NOTE_D5,4, NOTE_C5,8, NOTE_C5,8,
+  NOTE_D5,4, NOTE_G5,4, NOTE_E5,4,
+  NOTE_F5,2, NOTE_C5,4,
+  NOTE_F5,4, NOTE_F5,8, NOTE_G5,8, NOTE_F5,8, NOTE_E5,8,
+  NOTE_D5,4, NOTE_D5,4, NOTE_D5,4,
+  NOTE_G5,4, NOTE_G5,8, NOTE_A5,8, NOTE_G5,8, NOTE_F5,8,
+  NOTE_E5,4, NOTE_C5,4, NOTE_C5,4,
+  
+  NOTE_A5,4, NOTE_A5,8, NOTE_AS5,8, NOTE_A5,8, NOTE_G5,8, //53
+  NOTE_F5,4, NOTE_D5,4, NOTE_C5,8, NOTE_C5,8,
+  NOTE_D5,4, NOTE_G5,4, NOTE_E5,4,
+  NOTE_F5,2, REST,4
+};
+
 const int miichannel_melody[] PROGMEM = {
   
   // Mii Channel theme 
@@ -442,6 +508,13 @@ void SpeakerSequencer::setSong(int song)
       songptr = miichannel_melody;
       tempo = 114;
       totalnotes =sizeof(miichannel_melody)/sizeof(miichannel_melody[0])/2; 
+      wholenote = (60000 * 4) / tempo;
+      break;
+    case 4:
+      curnoteidx = 0;
+      songptr = noel_melody;
+      tempo = 140;
+      totalnotes =sizeof(noel_melody)/sizeof(noel_melody[0])/2; 
       wholenote = (60000 * 4) / tempo;
       break;
   }

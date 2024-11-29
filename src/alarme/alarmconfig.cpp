@@ -2,13 +2,24 @@
 
 void AlarmConfig::loadconfig()
 {
-    brightess = 5;
-    snoozedelay = 9;
+    brightess = EEPROM.read(EEPROMADDR_BRIGHTNESS);
+    snoozedelay = EEPROM.read(EEPROMADDR_SNOOZE);
+    alarm1song = EEPROM.read(EEPROMADDR_ALARM1SONG);
+    alarm2song = EEPROM.read(EEPROMADDR_ALARM2SONG);
 }
 
 void AlarmConfig::saveconfig()
 {
+  // put ou update?
+}
 
+void AlarmConfig::clearconfig()
+{
+  // ecrit en eeprom les valeur par defaut
+  EEPROM.write(EEPROMADDR_BRIGHTNESS, 5);
+  EEPROM.write(EEPROMADDR_SNOOZE, 9);
+  EEPROM.write(EEPROMADDR_ALARM1SONG, 0);
+  EEPROM.write(EEPROMADDR_ALARM2SONG, 1);
 }
 
 void AlarmConfig::degbugPrint()
@@ -19,22 +30,42 @@ void AlarmConfig::degbugPrint()
     Serial.println(snoozedelay);
 }
 
-int AlarmConfig::getBrightness()
+byte AlarmConfig::getBrightness()
 {
     return brightess;
 }
 
-void AlarmConfig::setBrightness(int brightess)
+void AlarmConfig::setBrightness(byte brightess)
 {
     this->brightess = brightess;
 }
 
-int AlarmConfig::getSnoozeDelay()
+byte AlarmConfig::getSnoozeDelay()
 {
     return snoozedelay;
 }
 
-void AlarmConfig::setSnoozeDelay(int snoozedelay)
+void AlarmConfig::setSnoozeDelay(byte delay)
 {
-    this->snoozedelay = snoozedelay;
+    snoozedelay = delay;
+}
+
+byte AlarmConfig::getAlarm1Song()
+{
+  return alarm1song;
+}
+
+void AlarmConfig::setAlarm1Song(byte song)
+{
+  alarm1song = song;
+}
+
+byte AlarmConfig::getAlarm2Song()
+{
+  return alarm2song;
+}
+
+void AlarmConfig::setAlarm2Song(byte song)
+{
+  alarm2song = song;
 }

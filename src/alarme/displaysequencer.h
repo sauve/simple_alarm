@@ -34,6 +34,10 @@ class DisplaySequencer
     bool flashCentre = false;
 
     char buffer[32];
+    int bufferlen = 0;
+    int bufferidx = 0;
+    int scrollspeed = 0;
+    int scrolldir = 1;
     
     // valeur affichage
     // devrait avoir le display ici, tout passe par le sequenceur

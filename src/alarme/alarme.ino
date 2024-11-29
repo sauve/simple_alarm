@@ -3,6 +3,7 @@
 #include <DS3231.h>
 #include <Wire.h>
 #include <inttypes.h>
+#include "alarmconfig.h"
 #include "commandstring.h"
 #include "ledsequencer.h"
 #include "speakersequencer.h"
@@ -44,6 +45,29 @@ const char beep_cmdstr[] PROGMEM = {"beep"};
 const char play_cmdstr[] PROGMEM = {"play"};
 const char stop_cmdstr[] PROGMEM = {"stop"};
 const char song_cmdstr[] PROGMEM = {"song"};
+const char clearconf_cmdstr[] PROGMEM = {"clearconfig"};
+const char showconf_cmdstr[] PROGMEM = {"showconfig"};
+
+const char lundi_str[] PROGMEM = {"lundi"};
+const char mardi_str[] PROGMEM = {"Hardi"}; 
+const char mercredi_str[] PROGMEM = {"Hercredi"}; 
+const char jeudi_str[] PROGMEM = {"jeudi"}; 
+const char vendredi_str[] PROGMEM = {"uendredi"}; 
+const char samedi_str[] PROGMEM = {"saHedi"}; 
+const char dimanche_str[] PROGMEM = {"diHanche"};
+const char janvier_str[] PROGMEM = {"januier"}; 
+const char fevrier_str[] PROGMEM = {"feurier"}; 
+const char mars_str[] PROGMEM = {"Hars"}; 
+const char avril_str[] PROGMEM = {"auril"}; 
+const char mai_str[] PROGMEM = {"Hai"}; 
+const char juin_str[] PROGMEM = {"juin"}; 
+const char juillet_str[] PROGMEM = {"juillet"}; 
+const char aout_str[] PROGMEM = {"aout"};
+const char septembre_str[] PROGMEM = {"septeHbre"};     ; 
+const char octobre_str[] PROGMEM = {"octobre"}; 
+const char novembre_str[] PROGMEM = {"nouehbre"}; 
+const char decembre_str[] PROGMEM = {"deceHbre"}; 
+
 
 
 class GestionEtat
@@ -58,7 +82,7 @@ unsigned long lastUpdateTime = 0;
 unsigned long curUpdateTime = 0;
 DS3231 myRTC;
 GestionEtat* EtatCourant = nullptr;
-
+AlarmConfig config;
 
 // Variables pouir la gestion des boutons
 uint8_t btnlastpressed;
@@ -202,9 +226,13 @@ void GestionAfficheHeure::HandleState()
     display.AfficheHeure(hour, minute);
 
     // set la led pm
-    if (pmFlag)
+    if (pmFlag && h12Flag)
     {
       leds.SetPM(true, 0);
+    }
+    else
+    {
+      leds.SetPM(false, 0);
     }
 
     // set les les selon l'alarme
@@ -507,43 +535,43 @@ void ConsoleManager::processCmd()
   else if (cmd.cmpCmd_P(showtext_cmdstr)==0)
   {
     // state
-    display.Affiche("lundi"); 
+    display.Affiche_P(lundi_str); 
     delay(1000);
-   display.Affiche("Hardi"); 
+   display.Affiche_P(mardi_str); 
     delay(1000);
-    display.Affiche("Hercredi"); 
+    display.Affiche_P(mercredi_str); 
     delay(1000);
-    display.Affiche("jeudi"); 
+    display.Affiche_P(jeudi_str); 
     delay(1000);
-    display.Affiche("uendredi"); 
+    display.Affiche_P(vendredi_str); 
     delay(1000);
-    display.Affiche("saHedi"); 
+    display.Affiche_P(samedi_str); 
     delay(1000);
-    display.Affiche("diHanche"); 
+    display.Affiche_P(dimanche_str); 
     delay(1000);
-    display.Affiche("januier"); 
+    display.Affiche_P(janvier_str); 
     delay(1000);
-    display.Affiche("feurier"); 
+    display.Affiche_P(fevrier_str); 
     delay(1000);
-    display.Affiche("Hars"); 
+    display.Affiche_P(mars_str); 
     delay(1000);
-    display.Affiche("auril"); 
+    display.Affiche_P(avril_str); 
     delay(1000);
-    display.Affiche("Hai"); 
+    display.Affiche_P(mai_str); 
     delay(1000);
-    display.Affiche("juin"); 
+    display.Affiche_P(juin_str); 
     delay(1000);
-    display.Affiche("juillet"); 
+    display.Affiche_P(juillet_str); 
     delay(1000);
-    display.Affiche("aout"); 
+    display.Affiche_P(aout_str); 
     delay(1000);
-    display.Affiche("septeHbre")     ; 
+    display.Affiche_P(septembre_str)     ; 
     delay(1000);
-    display.Affiche("octobre"); 
+    display.Affiche_P(octobre_str); 
     delay(1000);
-    display.Affiche("nouehbre"); 
+    display.Affiche_P(novembre_str); 
     delay(1000);
-    display.Affiche("deceHbre"); 
+    display.Affiche_P(decembre_str); 
     delay(1000); 
   }
   else if (cmd.cmpCmd_P(temp_cmdstr)==0)
@@ -569,6 +597,23 @@ void ConsoleManager::processCmd()
     int song = cmd.getArgInt(0);
     speaker.setSong(song);
   }
+  else if (cmd.cmpCmd_P(clearconf_cmdstr)==0)
+  {
+    config.clearconfig();
+    Serial.println(F("Configuration remise a neuf"));
+  }
+  else if (cmd.cmpCmd_P(showconf_cmdstr)==0)
+  {
+    Serial.println(F("Configuration courante"));
+    Serial.print(F("luminosite: "));
+    Serial.println(config.getBrightness());
+    Serial.print(F("snooze: "));
+    Serial.println(config.getSnoozeDelay());
+    Serial.print(F("Alarme 1: "));
+    Serial.println(config.getAlarm1Song());
+    Serial.print(F("Alarme 2: "));
+    Serial.println(config.getAlarm2Song());
+  }
   else
   {
     // unknown command
@@ -586,6 +631,8 @@ void setup() {
   pinMode(BTN_MOINS_PIN, INPUT_PULLUP);
   pinMode(BTN_OK_PIN, INPUT_PULLUP);
 
+  config.loadconfig();
+  
   Serial.begin(9600);
   console.Setup();
   
