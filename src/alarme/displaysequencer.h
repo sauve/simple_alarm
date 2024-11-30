@@ -13,11 +13,13 @@ class DisplaySequencer
     void update();
 
     
-    void ChangeLuminosite(byte luminosite);
+    void ChangeLuminosite(int luminosite);
+    void setLuminosite(byte luminosite);
     void FlashDeuxPoints();
     void FlashChiffreDroit();
     void FlashChiffreGauche();
     void DeuxPointsOn(bool on);
+    void DisplayOnOff(bool on);
 
 
     void AfficheHeure(int heure, int minute); 
@@ -38,6 +40,9 @@ class DisplaySequencer
     int bufferidx = 0;
     int scrollspeed = 0;
     int scrolldir = 1;
+    byte curluminosite;
+    bool needUodate = false;
+    
     
     // valeur affichage
     // devrait avoir le display ici, tout passe par le sequenceur

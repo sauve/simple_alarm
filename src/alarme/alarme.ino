@@ -119,6 +119,15 @@ void GestionAfficheHeure::HandleButtons()
     presedconf = 0;  
   }
 
+  if (boutons.justPressed(BTN_PLUS) )
+  {
+    display.ChangeLuminosite(1);
+  }
+  if (boutons.justPressed(BTN_MOINS) )
+  {
+    display.ChangeLuminosite(-1);
+  }
+
   if( presedconf == 200 )
   {
     // si OK, Plus ou moins sont aussi appuyer
