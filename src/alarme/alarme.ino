@@ -8,21 +8,10 @@
 #include "ledsequencer.h"
 #include "speakersequencer.h"
 #include "displaysequencer.h"
-
-
-// Defines pour les pins
-#define BTN_CONF_PIN  A0
-#define BTN_PLUS_PIN  A1
-#define BTN_MOINS_PIN  A2
-#define BTN_OK_PIN  A3
+#include "gestbouton.h"
 
 
 
-// button bit constant
-#define BTN_CONF    0b00000001
-#define BTN_PLUS    0b00000010
-#define BTN_MOINS   0b00000100
-#define BTN_OK    0b00001000
 
 
 /// command string
@@ -84,51 +73,7 @@ DS3231 myRTC;
 GestionEtat* EtatCourant = nullptr;
 AlarmConfig config;
 
-// Variables pouir la gestion des boutons
-uint8_t btnlastpressed;
-uint8_t btnpressed;
-uint8_t btnchanged;
-
-void updateButtons()
-{
-  // Update 
-  btnlastpressed = btnpressed;
-  // btnpressed
-  btnpressed = 0;
-  if ( digitalRead(BTN_CONF_PIN) == 0 )
-  {
-    btnpressed += BTN_CONF;
-  }
-  if ( digitalRead(BTN_PLUS_PIN) == 0 )
-  {
-    btnpressed += BTN_PLUS;
-  }
-  if ( digitalRead(BTN_MOINS_PIN) == 0 )
-  {
-    btnpressed += BTN_MOINS;
-  }
-  if ( digitalRead(BTN_OK_PIN) == 0 )
-  {
-    btnpressed += BTN_OK;
-  }
-  // update les inputs
-  btnchanged = btnpressed ^ btnlastpressed;
-}
-
-bool justPressed( uint8_t button)
-{
-  return ((btnpressed & btnchanged) & button ) != 0;
-}
-
-bool stillPressed( uint8_t button)
-{
-  return ((btnpressed & ~btnchanged) & button ) != 0;
-}
-
-bool isPressed( uint8_t button)
-{
-  return (btnpressed & button) != 0;
-}
+GestionBoutons boutons;
 
 DisplaySequencer display;
 
@@ -152,6 +97,8 @@ class GestionTestEtat : public GestionEtat
   public:
     void HandleButtons();
     void HandleState();
+  protected:
+    int valeuraffiche = 8888;
 };
 
 GestionAfficheHeure EtatAfficheHeure;
@@ -159,11 +106,11 @@ GestionTestEtat EtatTestEtat;
 
 void GestionAfficheHeure::HandleButtons()
 {
-  if ( justPressed(BTN_CONF) )
+  if ( boutons.justPressed(BTN_CONF) )
   {
     presedconf = 1;
   }
-  else if ( stillPressed(BTN_CONF) )
+  else if ( boutons.stillPressed(BTN_CONF) )
   {
     presedconf++;
   }
@@ -176,17 +123,17 @@ void GestionAfficheHeure::HandleButtons()
   {
     // si OK, Plus ou moins sont aussi appuyer
     presedconf = 0;  
-    if (  isPressed( BTN_OK) )
+    if (  boutons.isPressed( BTN_OK) )
     {
       // Change l'etat
       Serial.println(F("Config Date"));
     }
-    else if ( isPressed( BTN_PLUS) )
+    else if ( boutons.isPressed( BTN_PLUS) )
     {
       // Change l'etat
       Serial.println(F("Config Alarme 1"));
     }
-    else if ( isPressed( BTN_MOINS) )
+    else if ( boutons.isPressed( BTN_MOINS) )
     {
       // Change l'etat
       Serial.println(F("Config Alarme 2"));
@@ -279,15 +226,23 @@ void GestionAfficheHeure::HandleState()
 
 void GestionTestEtat::HandleButtons()
 {
-  if ( justPressed(BTN_CONF) )
+  if ( boutons.justPressed(BTN_CONF) )
   {
     EtatCourant = &EtatAfficheHeure;
+  }
+  else if ( boutons.justPressed(BTN_PLUS) )
+  {
+    valeuraffiche += 1;
+  }
+  else if ( boutons.justPressed(BTN_MOINS) )
+  {
+    valeuraffiche -= 1;
   }
 }
 
 void GestionTestEtat::HandleState()
 {
-  display.Affiche(8888);
+  display.Affiche(valeuraffiche);
 }
 
 
@@ -625,11 +580,7 @@ void ConsoleManager::processCmd()
 ConsoleManager console;
 
 void setup() {
-  // pinmode pour les boutons
-  pinMode(BTN_CONF_PIN, INPUT_PULLUP);
-  pinMode(BTN_PLUS_PIN, INPUT_PULLUP);
-  pinMode(BTN_MOINS_PIN, INPUT_PULLUP);
-  pinMode(BTN_OK_PIN, INPUT_PULLUP);
+  boutons.setup();
 
   config.loadconfig();
   
@@ -665,7 +616,7 @@ void loop() {
   curUpdateTime = millis();
 
   // Mise a jour bouton
-  updateButtons();
+  boutons.Update();
 
   // handle selon l'etat
   EtatCourant->HandleButtons();
