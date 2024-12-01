@@ -62,6 +62,7 @@ const char decembre_str[] PROGMEM = {"deceHbre"};
 class GestionEtat
 {
   public:
+    virtual void EnterState() = 0;
     virtual void HandleButtons() = 0;
     virtual void HandleState() = 0;
 };
@@ -81,9 +82,31 @@ LEDSequencer leds;
 
 SpeakerSequencer speaker;
 
+// methode utilitaire hors etat
+
+void clearAlarme( byte alarme )
+{
+  // arrete la musique
+  if (alarme == 0)
+  {
+    speaker.Stop();
+    // clear  
+    myRTC.checkIfAlarm(1);
+  }
+  else if (alarme == 1)
+  {
+    speaker.Stop();
+    // clear  
+    myRTC.checkIfAlarm(2);
+  }
+}
+
+
+
 class GestionAfficheHeure : public GestionEtat
 {
   public:
+    void EnterState();
     void HandleButtons();
     void HandleState();
 
@@ -95,14 +118,50 @@ class GestionAfficheHeure : public GestionEtat
 class GestionTestEtat : public GestionEtat
 {
   public:
+    void EnterState();
     void HandleButtons();
     void HandleState();
   protected:
     int valeuraffiche = 8888;
 };
 
+class GestionConfigHeure : public GestionEtat
+{
+  public:
+    void EnterState();
+    void HandleButtons();
+    void HandleState();
+  protected:
+    int nouvelleheure = 0;
+    int nouvelleminte = 0;
+    byte heureouminute = 0;
+};
+
+class GestionConfigAlarme : public GestionEtat
+{
+  public:
+    void EnterState();
+    void HandleButtons();
+    void HandleState();
+
+    void setAlarme(byte alarm);
+  protected:
+    int nouvelleheure = 0;
+    int nouvelleminte = 0;
+    byte heureouminute = 0;
+    byte curAlarme = 1;
+    bool onoff = false;
+};
+
 GestionAfficheHeure EtatAfficheHeure;
 GestionTestEtat EtatTestEtat;
+GestionConfigHeure EtatConfigHeure;
+GestionConfigAlarme EtatConfigAlarme;
+
+void GestionAfficheHeure::EnterState()
+{
+  Serial.println(F("Etat Affiche Heure"));
+}
 
 void GestionAfficheHeure::HandleButtons()
 {
@@ -119,13 +178,32 @@ void GestionAfficheHeure::HandleButtons()
     presedconf = 0;  
   }
 
-  if (boutons.justPressed(BTN_PLUS) )
+  
+  // si alarme n'est pas active, change luminosit, sinon ferme alarme
+  if (presedconf == 0 )
   {
-    display.ChangeLuminosite(1);
-  }
-  if (boutons.justPressed(BTN_MOINS) )
-  {
-    display.ChangeLuminosite(-1);
+    if (boutons.justPressed(BTN_PLUS) )
+    {
+      if (myRTC.checkIfAlarm(1, false))
+      {
+        clearAlarme(0);
+      }
+      else 
+      {
+        display.ChangeLuminosite(1);
+      }
+    }
+    if (boutons.justPressed(BTN_MOINS) )
+    {
+      if (myRTC.checkIfAlarm(2, false))
+      {
+        clearAlarme(1);
+      }
+      else 
+      {
+        display.ChangeLuminosite(-1);
+      }
+    }
   }
 
   if( presedconf == 200 )
@@ -140,17 +218,21 @@ void GestionAfficheHeure::HandleButtons()
     else if ( boutons.isPressed( BTN_PLUS) )
     {
       // Change l'etat
-      Serial.println(F("Config Alarme 1"));
+      EtatConfigAlarme.setAlarme(0);
+      EtatConfigAlarme.EnterState();
+      EtatCourant = &EtatConfigAlarme;
     }
     else if ( boutons.isPressed( BTN_MOINS) )
     {
       // Change l'etat
-      Serial.println(F("Config Alarme 2"));
+      EtatConfigAlarme.setAlarme(1);
+      EtatConfigAlarme.EnterState();
+      EtatCourant = &EtatConfigAlarme;
     }
     else
     {
-      Serial.println(F("Config Heure"));
-      EtatCourant = &EtatTestEtat;
+      EtatConfigHeure.EnterState();
+      EtatCourant = &EtatConfigHeure;
     }
   }
 }
@@ -232,6 +314,11 @@ void GestionAfficheHeure::HandleState()
   }
 }
 
+void GestionTestEtat::EnterState()
+{
+  Serial.println(F("Test etat"));
+  valeuraffiche = 8888;
+}
 
 void GestionTestEtat::HandleButtons()
 {
@@ -254,6 +341,223 @@ void GestionTestEtat::HandleState()
   display.Affiche(valeuraffiche);
 }
 
+
+void GestionConfigHeure::EnterState()
+{
+  Serial.println(F("Etat config heure"));
+  heureouminute  = 0;
+  bool h12Flag;
+  bool pmFlag;
+  nouvelleheure = myRTC.getHour(h12Flag, pmFlag);
+  nouvelleminte = myRTC.getMinute();
+}
+
+void GestionConfigHeure::HandleButtons()
+{
+  if ( boutons.justPressed(BTN_CONF) )
+  {
+    heureouminute += 1;
+    if ( heureouminute > 1 )
+    {
+      // set l'heure acutelle avec les nouvelles valeurs
+      myRTC.setClockMode(false);  // set to 24h
+      myRTC.setHour(nouvelleheure);
+      myRTC.setMinute(nouvelleminte);
+      myRTC.setSecond(0);
+      EtatAfficheHeure.EnterState();
+      EtatCourant = &EtatAfficheHeure;
+    }
+  }
+  else if ( boutons.justPressed(BTN_PLUS) )
+  {
+    if ( heureouminute == 0 )
+    {
+      nouvelleheure += 1;
+      if (nouvelleheure > 23)
+      {
+        nouvelleheure = 0;
+      }
+    }
+    else
+    {
+      nouvelleminte += 1;
+      if (nouvelleminte > 59)
+      {
+        nouvelleminte = 0;
+      }
+    }
+  }
+  else if ( boutons.justPressed(BTN_MOINS) )
+  {
+    if ( heureouminute == 0 )
+    {
+      nouvelleheure -= 1;
+      if (nouvelleheure < 0)
+      {
+        nouvelleheure = 23;
+      }
+    }
+    else
+    {
+      nouvelleminte -= 1;
+      if (nouvelleminte < 0)
+      {
+        nouvelleminte = 59;
+      }
+    }
+  }
+}
+
+
+void GestionConfigHeure::HandleState()
+{
+  if (heureouminute == 0)
+  {
+    display.Affiche(nouvelleheure);
+  }
+  else
+  {
+    display.Affiche(nouvelleminte);
+  }
+}
+
+
+void GestionConfigAlarme::EnterState()
+{
+  bool pmFlag;
+  byte alarmDay, alarmHour, alarmMinute, alarmSecond, alarmBits;
+  bool alarmDy, alarmH12Flag, alarmPmFlag;
+ 
+  heureouminute = 0;
+  if ( curAlarme == 0)
+  {
+    myRTC.getA1Time(alarmDay, alarmHour, alarmMinute, alarmSecond, alarmBits, alarmDy, alarmH12Flag, alarmPmFlag);
+    nouvelleheure = alarmHour;
+    nouvelleminte = alarmMinute;
+    onoff = myRTC.checkAlarmEnabled(1);
+    leds.SetAlarm1(true, 48);
+  }
+  else
+  {
+    myRTC.getA2Time(alarmDay, alarmHour, alarmMinute, alarmBits, alarmDy, alarmH12Flag, alarmPmFlag);
+    nouvelleheure = alarmHour;
+    nouvelleminte = alarmMinute;
+    onoff = myRTC.checkAlarmEnabled(2); 
+    leds.SetAlarm2(true, 48);
+  }
+}
+
+
+void GestionConfigAlarme::setAlarme(byte alarm)
+{
+  curAlarme = alarm;
+  if (curAlarme >1)
+  {
+    curAlarme = 0;
+  }
+}
+
+void GestionConfigAlarme::HandleButtons()
+{
+  if ( boutons.justPressed(BTN_CONF) )
+  {
+    heureouminute += 1;
+    if ( heureouminute > 2 )
+    {
+      // set l'alarm avec les nouvelles valeurs
+      if ( curAlarme == 0)
+      {
+        myRTC.setA1Time(1, nouvelleheure, nouvelleminte, 0, 0b00001000, true, false, false);
+        if (onoff)
+        {
+          myRTC.turnOnAlarm(1);
+        }
+        else
+        {
+          myRTC.turnOffAlarm(1);
+        }
+      }
+      else
+      {
+        if (onoff)
+        {
+          myRTC.turnOnAlarm(2);
+        }
+        else
+        {
+          myRTC.turnOffAlarm(2);
+        }
+      }
+      
+      EtatAfficheHeure.EnterState();
+      EtatCourant = &EtatAfficheHeure;
+    }
+  }
+  else if ( boutons.justPressed(BTN_PLUS) )
+  {
+    if ( heureouminute == 0 )
+    {
+      nouvelleheure += 1;
+      if (nouvelleheure > 23)
+      {
+        nouvelleheure = 0;
+      }
+    }
+    else if (heureouminute == 1)
+    {
+      nouvelleminte += 1;
+      if (nouvelleminte > 59)
+      {
+        nouvelleminte = 0;
+      }
+    }
+    else
+    {
+      // on ou off
+      onoff = true;
+    }
+  }
+  else if ( boutons.justPressed(BTN_MOINS) )
+  {
+    if ( heureouminute == 0 )
+    {
+      nouvelleheure -= 1;
+      if (nouvelleheure < 0)
+      {
+        nouvelleheure = 23;
+      }
+    }
+    else if (heureouminute == 1)
+    {
+      nouvelleminte -= 1;
+      if (nouvelleminte < 0)
+      {
+        nouvelleminte = 59;
+      }
+    }
+    else
+    {
+      // on ou off
+      onoff = false;
+    }
+  }
+}
+
+void GestionConfigAlarme::HandleState()
+{
+  if (heureouminute == 0)
+  {
+    display.Affiche(nouvelleheure);
+  }
+  else if (heureouminute == 1)
+  {
+    display.Affiche(nouvelleminte);
+  }
+  else
+  {
+    display.Affiche(onoff);
+  }
+}
 
 class ConsoleManager
 {
@@ -430,13 +734,9 @@ void ConsoleManager::processCmd()
   }
   else if (cmd.cmpCmd_P(clearalarm1_cmdstr)==0)
   {
-    // set alarm 1
+    // clear alarm 1
     Serial.println(F("commande clearalarm1"));
-    myRTC.checkIfAlarm(1);
-    if ( speaker.isPlaying() == true )
-    {
-      speaker.Stop();
-    }
+    clearAlarme(0);
   }
   else if (cmd.cmpCmd_P(fade_cmdstr)==0)
   {

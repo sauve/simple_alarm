@@ -28,6 +28,7 @@ class AlarmConfig
         void setAlarm2Song(byte song);
     
     protected:
+        byte versionconfig;
         byte brightess;
         byte snoozedelay;
         byte alarm1song;
