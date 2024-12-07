@@ -58,6 +58,12 @@ const char novembre_str[] PROGMEM = {"nouehbre"};
 const char decembre_str[] PROGMEM = {"deceHbre"}; 
 
 
+// Information de version
+#define MAJOR_VERSION 0
+#define MINOR_VERSION 1
+#define REVISON_VERISON 0
+//const char device_str[] PROGMEM = {"Reveil matin maison chose"}; 
+//const char version_str[] PROGMEM = {"Version: "}; 
 
 class GestionEtat
 {
@@ -350,6 +356,7 @@ void GestionConfigHeure::EnterState()
   bool pmFlag;
   nouvelleheure = myRTC.getHour(h12Flag, pmFlag);
   nouvelleminte = myRTC.getMinute();
+  display.DeuxPointsOn(false);
 }
 
 void GestionConfigHeure::HandleButtons()
@@ -435,7 +442,7 @@ void GestionConfigAlarme::EnterState()
     nouvelleheure = alarmHour;
     nouvelleminte = alarmMinute;
     onoff = myRTC.checkAlarmEnabled(1);
-    leds.SetAlarm1(true, 48);
+    leds.SetAlarm1(true, 4);
   }
   else
   {
@@ -443,8 +450,9 @@ void GestionConfigAlarme::EnterState()
     nouvelleheure = alarmHour;
     nouvelleminte = alarmMinute;
     onoff = myRTC.checkAlarmEnabled(2); 
-    leds.SetAlarm2(true, 48);
+    leds.SetAlarm2(true, 4);
   }
+  display.DeuxPointsOn(false);
 }
 
 
@@ -555,7 +563,14 @@ void GestionConfigAlarme::HandleState()
   }
   else
   {
-    display.Affiche(onoff);
+    if (onoff)
+    {
+      display.Affiche("On  ");
+    }
+    else
+    {
+      display.Affiche("Off ");
+    }
   }
 }
 
@@ -564,6 +579,7 @@ class ConsoleManager
 public:
   void Setup();
   void Update();
+  void printCommandes();
   
 protected:
   // liste de commande supporte
@@ -604,6 +620,27 @@ void ConsoleManager::Update()
   
   // si non, rien a faire
 
+}
+
+
+void ConsoleManager::printCommandes()
+{
+  char buffer[32];
+
+  strcpy_P(buffer, showtime_cmdstr);
+  Serial.println(buffer);
+  strcpy_P(buffer, settime_cmdstr);
+  Serial.println(buffer);
+  strcpy_P(buffer, setdate_cmdstr);
+  Serial.println(buffer);
+  strcpy_P(buffer, gettimedate_cmdstr);
+  Serial.println(buffer);
+  strcpy_P(buffer, getalarm1_cmdstr);
+  Serial.println(buffer);
+  strcpy_P(buffer, setalarm1_cmdstr);
+  Serial.println(buffer);
+  strcpy_P(buffer, setalarm1on_cmdstr);
+  Serial.println(buffer);
 }
 
 void ConsoleManager::processCmd()
@@ -878,6 +915,10 @@ void ConsoleManager::processCmd()
     Serial.print(F("Alarme 2: "));
     Serial.println(config.getAlarm2Song());
   }
+  else if (cmd.cmpCmd("help")==0)
+  {
+    printCommandes();
+  }
   else
   {
     // unknown command
@@ -893,7 +934,7 @@ void setup() {
 
   config.loadconfig();
   
-  Serial.begin(9600);
+  Serial.begin(57600);
   console.Setup();
   
   // pinmode pour les LED
@@ -915,6 +956,14 @@ void setup() {
   // Etat initiale
   EtatCourant = &EtatAfficheHeure;
 
+  // affiche la version
+  Serial.println(F("Reveil matin maison chose"));
+  Serial.print(F("Version: "));
+  Serial.print(MAJOR_VERSION);
+  Serial.print('.');
+  Serial.print(MINOR_VERSION);
+  Serial.print('.');
+  Serial.println(REVISON_VERISON);
   Serial.println(F("Initialisation complete"));
 }
 
