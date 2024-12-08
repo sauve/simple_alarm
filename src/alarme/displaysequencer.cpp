@@ -21,10 +21,10 @@ void DisplaySequencer::update()
 {
   // valid flash
   // si mise a jour
-  if (needUodate)
+  if (needUpdate)
   {
     // update display
-    needUodate = false;
+    needUpdate = false;
   }
 }
 
@@ -91,7 +91,7 @@ void DisplaySequencer::AfficheHeure(int heure, int minute)
     buffer[3] = '0' + (minute % 10);
     buffer[4] = 0;
     tm.display((const char *)buffer);
-    needUodate = true;
+    needUpdate = true;
 }
 
 void DisplaySequencer::Affiche(int valeur)
@@ -99,7 +99,7 @@ void DisplaySequencer::Affiche(int valeur)
     // set les valeurs
     // set le flag pour mise a jour
     tm.display(valeur);
-    needUodate = true;
+    needUpdate = true;
 }
 
 void DisplaySequencer::Affiche(const char* valeur)
@@ -107,7 +107,7 @@ void DisplaySequencer::Affiche(const char* valeur)
     // set les valeurs
     // set le flag pour mise a jour
     tm.display(valeur);
-    needUodate = true;
+    needUpdate = true;
 }
 
 void DisplaySequencer::Affiche_P(const char* valeur)
@@ -116,7 +116,7 @@ void DisplaySequencer::Affiche_P(const char* valeur)
     // set le flag pour mise a jour
     strcpy_P(buffer, valeur);
     tm.display((const char*)buffer);
-    needUodate = true;
+    needUpdate = true;
 }
 
 void DisplaySequencer::Clear()
@@ -124,5 +124,5 @@ void DisplaySequencer::Clear()
     // clear le display
     // set le flag pour mise a jour
     tm.clearScreen();
-    needUodate = true;
+    needUpdate = true;
 }

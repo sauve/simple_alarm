@@ -41,7 +41,7 @@ class DisplaySequencer
     int scrollspeed = 0;
     int scrolldir = 1;
     byte curluminosite;
-    bool needUodate = false;
+    bool needUpdate = false;
     
     
     // valeur affichage

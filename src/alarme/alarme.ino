@@ -57,6 +57,8 @@ const char octobre_str[] PROGMEM = {"octobre"};
 const char novembre_str[] PROGMEM = {"nouehbre"}; 
 const char decembre_str[] PROGMEM = {"deceHbre"}; 
 
+// nombre de jour par mois, sans etre une annee bissextile
+const byte nbrjourmois[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 // Information de version
 #define MAJOR_VERSION 0
@@ -64,6 +66,28 @@ const char decembre_str[] PROGMEM = {"deceHbre"};
 #define REVISON_VERISON 0
 //const char device_str[] PROGMEM = {"Reveil matin maison chose"}; 
 //const char version_str[] PROGMEM = {"Version: "}; 
+
+// Retourne le nombre de jour pour un mois d'une annee donnee
+byte getNombreJourMois(int mois, int annee)
+{
+  if (mois > 11) return 0;
+  if (mois == 1)
+  {
+    // si divisible par 4 sauf divisible par 100, mais commme le support passee 2099 est pas pour cette version bien...
+    if ( (annee % 4) == 0)
+    {
+      return pgm_read_byte_near(nbrjourmois + 1) + 1;
+    }
+    return pgm_read_byte_near(nbrjourmois + 1);
+  }
+  return pgm_read_byte_near(nbrjourmois + mois);
+}
+
+void GenereDateString(int annee, int mois, int jour, int dow, int heure, int minute, char *buffer)
+{
+    // doit remettre les tableau de jour de semaine et de mois en tant qu'array en progmem
+}
+
 
 class GestionEtat
 {
@@ -78,14 +102,11 @@ unsigned long lastUpdateTime = 0;
 unsigned long curUpdateTime = 0;
 DS3231 myRTC;
 GestionEtat* EtatCourant = nullptr;
+
 AlarmConfig config;
-
 GestionBoutons boutons;
-
 DisplaySequencer display;
-
 LEDSequencer leds;
-
 SpeakerSequencer speaker;
 
 // methode utilitaire hors etat
@@ -143,6 +164,20 @@ class GestionConfigHeure : public GestionEtat
     byte heureouminute = 0;
 };
 
+class GestionConfigDate : public GestionEtat
+{
+  public:
+    void EnterState();
+    void HandleButtons();
+    void HandleState();
+  protected:
+    int nouvelleannee = 0;
+    int nouveaumois = 0;
+    int nouveaujour = 0;
+    int nouveaudow = 0;
+    byte etapeconfig = 0;
+};
+
 class GestionConfigAlarme : public GestionEtat
 {
   public:
@@ -163,6 +198,7 @@ GestionAfficheHeure EtatAfficheHeure;
 GestionTestEtat EtatTestEtat;
 GestionConfigHeure EtatConfigHeure;
 GestionConfigAlarme EtatConfigAlarme;
+GestionConfigDate EtatConfigDate;
 
 void GestionAfficheHeure::EnterState()
 {
@@ -356,7 +392,7 @@ void GestionConfigHeure::EnterState()
   bool pmFlag;
   nouvelleheure = myRTC.getHour(h12Flag, pmFlag);
   nouvelleminte = myRTC.getMinute();
-  display.DeuxPointsOn(false);
+  display.DeuxPointsOn(true);
 }
 
 void GestionConfigHeure::HandleButtons()
@@ -452,7 +488,7 @@ void GestionConfigAlarme::EnterState()
     onoff = myRTC.checkAlarmEnabled(2); 
     leds.SetAlarm2(true, 4);
   }
-  display.DeuxPointsOn(false);
+  display.DeuxPointsOn(true);
 }
 
 
@@ -571,6 +607,127 @@ void GestionConfigAlarme::HandleState()
     {
       display.Affiche("Off ");
     }
+  }
+}
+
+
+void GestionConfigDate::EnterState()
+{
+  bool century = false;
+  nouvelleannee = myRTC.getYear();
+  nouveaumois = myRTC.getMonth(century);
+  nouveaujour = myRTC.getDate();
+  nouveaudow = myRTC.getDoW();
+  etapeconfig = 0;
+  display.DeuxPointsOn(false);
+}
+
+void GestionConfigDate::HandleButtons()
+{
+if ( boutons.justPressed(BTN_CONF) )
+  {
+    etapeconfig += 1;
+    if ( etapeconfig > 3 )
+    {
+      // set l'alarm avec les nouvelles valeurs
+      myRTC.setYear(nouvelleannee);
+      myRTC.setMonth(nouveaumois);
+      myRTC.setDate(nouveaujour);
+      myRTC.setDoW(nouveaudow);
+      
+      EtatAfficheHeure.EnterState();
+      EtatCourant = &EtatAfficheHeure;
+    }
+  }
+  else if ( boutons.justPressed(BTN_PLUS) )
+  {
+    if ( etapeconfig == 0 )
+    {
+      nouvelleannee += 1;
+      if (nouvelleannee > 99)
+      {
+        nouvelleannee = 0;
+      }
+    }
+    else if (etapeconfig == 1)
+    {
+      nouveaumois += 1;
+      if (nouveaumois > 12)
+      {
+        nouveaumois = 0;
+      }
+    }
+    else if (etapeconfig == 2)
+    {
+      nouveaujour += 1;
+      if (nouveaujour > getNombreJourMois(nouveaumois, nouvelleannee))
+      {
+        nouveaujour = 0;
+      }
+    }
+    else if (etapeconfig == 3)
+    {
+      nouveaudow += 1;
+      if (nouveaudow > 6)
+      {
+        nouveaudow = 0;
+      }
+    }
+  }
+  else if ( boutons.justPressed(BTN_MOINS) )
+  {
+    if ( etapeconfig == 0 )
+    {
+      nouvelleannee -= 1;
+      if (nouvelleannee < 0)
+      {
+        nouvelleannee = 99;
+      }
+    }
+    else if (etapeconfig == 1)
+    {
+      nouveaumois -= 1;
+      if (nouveaumois < 0)
+      {
+        nouveaumois = 12;
+      }
+    }
+    else if (etapeconfig == 2)
+    {
+      nouveaujour -= 1;
+      if (nouveaujour < 0)
+      {
+        nouveaujour = getNombreJourMois(nouveaumois, nouvelleannee);
+      }
+    }
+    else if (etapeconfig == 3)
+    {
+      nouveaudow -= 1;
+      if (nouveaudow < 0)
+      {
+        nouveaudow = 6;
+      }
+    }
+  }
+}
+
+void GestionConfigDate::HandleState()
+{
+  if (etapeconfig == 0)
+  {
+    display.Affiche(nouvelleannee);
+  }
+  else if (etapeconfig == 1)
+  {
+    display.Affiche(nouveaumois);
+  }
+  else if (etapeconfig == 2)
+  {
+    display.Affiche(nouveaujour);
+  }
+  else
+  {
+    display.Affiche(nouveaudow);
   }
 }
 
@@ -964,7 +1121,7 @@ void setup() {
   Serial.print(MINOR_VERSION);
   Serial.print('.');
   Serial.println(REVISON_VERISON);
-  Serial.println(F("Initialisation complete"));
+  Serial.println(F("Initialisation completee"));
 }
 
 
