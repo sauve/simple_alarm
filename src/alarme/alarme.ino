@@ -62,7 +62,7 @@ const byte nbrjourmois[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 // Information de version
 #define MAJOR_VERSION 0
-#define MINOR_VERSION 1
+#define MINOR_VERSION 2
 #define REVISON_VERISON 0
 //const char device_str[] PROGMEM = {"Reveil matin maison chose"}; 
 //const char version_str[] PROGMEM = {"Version: "}; 
@@ -70,7 +70,7 @@ const byte nbrjourmois[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 // Retourne le nombre de jour pour un mois d'une annee donnee
 byte getNombreJourMois(int mois, int annee)
 {
-  if (mois > 11) return 0;
+  if (mois > 12) return 0;
   if (mois == 1)
   {
     // si divisible par 4 sauf divisible par 100, mais commme le support passee 2099 est pas pour cette version bien...
@@ -194,11 +194,22 @@ class GestionConfigAlarme : public GestionEtat
     bool onoff = false;
 };
 
+class GestionConfigOption : public GestionEtat
+{
+  public:
+    void EnterState();
+    void HandleButtons();
+    void HandleState();
+  protected:
+    byte etapeoption = 0;
+};
+
 GestionAfficheHeure EtatAfficheHeure;
 GestionTestEtat EtatTestEtat;
 GestionConfigHeure EtatConfigHeure;
 GestionConfigAlarme EtatConfigAlarme;
 GestionConfigDate EtatConfigDate;
+GestionConfigOption EtatConfigOption;
 
 void GestionAfficheHeure::EnterState()
 {
@@ -246,6 +257,10 @@ void GestionAfficheHeure::HandleButtons()
         display.ChangeLuminosite(-1);
       }
     }
+    if (boutons.justPressed(BTN_OK) )
+    {
+      //leds.SetPM(true, 0);
+    }
   }
 
   if( presedconf == 200 )
@@ -254,8 +269,8 @@ void GestionAfficheHeure::HandleButtons()
     presedconf = 0;  
     if (  boutons.isPressed( BTN_OK) )
     {
-      // Change l'etat
-      Serial.println(F("Config Date"));
+      EtatConfigDate.EnterState();
+      EtatCourant = &EtatConfigDate;
     }
     else if ( boutons.isPressed( BTN_PLUS) )
     {
@@ -399,6 +414,11 @@ void GestionConfigHeure::HandleButtons()
 {
   if ( boutons.justPressed(BTN_CONF) )
   {
+    EtatAfficheHeure.EnterState();
+    EtatCourant = &EtatAfficheHeure;
+  }
+  else if ( boutons.justPressed(BTN_OK) )
+  {
     heureouminute += 1;
     if ( heureouminute > 1 )
     {
@@ -454,13 +474,23 @@ void GestionConfigHeure::HandleButtons()
 
 void GestionConfigHeure::HandleState()
 {
+  char outstr[5];
+  outstr[4] = 0;
   if (heureouminute == 0)
   {
-    display.Affiche(nouvelleheure);
+    outstr[2] = 'h';
+    outstr[3] = 'h';
+    outstr[0] = '0' + ((nouvelleheure % 100)/10);
+    outstr[1] = '0' + (nouvelleheure % 10);
+    display.Affiche(outstr);
   }
   else
   {
-    display.Affiche(nouvelleminte);
+    outstr[0] = 'H';
+    outstr[1] = 'H';
+    outstr[2] = '0' + ((nouvelleminte % 100)/10);
+    outstr[3] = '0' + (nouvelleminte % 10);
+    display.Affiche(outstr);
   }
 }
 
@@ -504,6 +534,11 @@ void GestionConfigAlarme::setAlarme(byte alarm)
 void GestionConfigAlarme::HandleButtons()
 {
   if ( boutons.justPressed(BTN_CONF) )
+  {
+    EtatAfficheHeure.EnterState();
+    EtatCourant = &EtatAfficheHeure;
+  }
+  else if ( boutons.justPressed(BTN_OK) )
   {
     heureouminute += 1;
     if ( heureouminute > 2 )
@@ -589,13 +624,23 @@ void GestionConfigAlarme::HandleButtons()
 
 void GestionConfigAlarme::HandleState()
 {
+  char outstr[5];
+  outstr[4] = 0;
   if (heureouminute == 0)
   {
-    display.Affiche(nouvelleheure);
+    outstr[0] = '0' + ((nouvelleheure % 100)/10);
+    outstr[1] = '0' + (nouvelleheure % 10);
+    outstr[2] = 'h';
+    outstr[3] = 'h';
+    display.Affiche(outstr);
   }
   else if (heureouminute == 1)
   {
-    display.Affiche(nouvelleminte);
+    outstr[0] = 'H';
+    outstr[1] = 'H';
+    outstr[2] = '0' + ((nouvelleminte % 100)/10);
+    outstr[3] = '0' + (nouvelleminte % 10);
+    display.Affiche(outstr);
   }
   else
   {
@@ -624,7 +669,12 @@ void GestionConfigDate::EnterState()
 
 void GestionConfigDate::HandleButtons()
 {
-if ( boutons.justPressed(BTN_CONF) )
+  if ( boutons.justPressed(BTN_CONF) )
+  {
+    EtatAfficheHeure.EnterState();
+    EtatCourant = &EtatAfficheHeure;
+  }
+  else if ( boutons.justPressed(BTN_OK) )
   {
     etapeconfig += 1;
     if ( etapeconfig > 3 )
@@ -654,7 +704,7 @@ if ( boutons.justPressed(BTN_CONF) )
       nouveaumois += 1;
       if (nouveaumois > 12)
       {
-        nouveaumois = 0;
+        nouveaumois = 1;
       }
     }
     else if (etapeconfig == 2)
@@ -662,7 +712,7 @@ if ( boutons.justPressed(BTN_CONF) )
       nouveaujour += 1;
       if (nouveaujour > getNombreJourMois(nouveaumois, nouvelleannee))
       {
-        nouveaujour = 0;
+        nouveaujour = 1;
       }
     }
     else if (etapeconfig == 3)
@@ -687,7 +737,7 @@ if ( boutons.justPressed(BTN_CONF) )
     else if (etapeconfig == 1)
     {
       nouveaumois -= 1;
-      if (nouveaumois < 0)
+      if (nouveaumois < 1)
       {
         nouveaumois = 12;
       }
@@ -695,7 +745,7 @@ if ( boutons.justPressed(BTN_CONF) )
     else if (etapeconfig == 2)
     {
       nouveaujour -= 1;
-      if (nouveaujour < 0)
+      if (nouveaujour < 1)
       {
         nouveaujour = getNombreJourMois(nouveaumois, nouvelleannee);
       }
@@ -713,22 +763,60 @@ if ( boutons.justPressed(BTN_CONF) )
 
 void GestionConfigDate::HandleState()
 {
+  char outstr[5];
+  outstr[4] = 0;
   if (etapeconfig == 0)
   {
-    display.Affiche(nouvelleannee);
+    outstr[0] = 'y';
+    outstr[1] = 'y';
+    outstr[2] = '0' + ((nouvelleannee % 100)/10);
+    outstr[3] = '0' + (nouvelleannee % 10);
+    display.Affiche(outstr);
   }
   else if (etapeconfig == 1)
   {
-    display.Affiche(nouveaumois);
+    outstr[0] = 'H';
+    outstr[1] = 'H';
+    outstr[2] = '0' + (nouveaumois /10);
+    outstr[3] = '0' + (nouveaumois % 10);
+    display.Affiche(outstr);
   }
   else if (etapeconfig == 2)
   {
-    display.Affiche(nouveaujour);
+    outstr[0] = 'd';
+    outstr[1] = 'd';
+    outstr[2] = '0' + (nouveaujour /10);
+    outstr[3] = '0' + (nouveaujour % 10);
+    display.Affiche(outstr);
   }
   else
   {
-    display.Affiche(nouveaudow);
+    outstr[0] = 'J';
+    outstr[1] = 'o';
+    outstr[2] = ' ';
+    outstr[3] = '0' + (nouveaudow % 10);
+    display.Affiche(outstr);
   }
+}
+
+
+void GestionConfigOption::EnterState()
+{
+  etapeoption = 0;
+}
+
+void GestionConfigOption::HandleButtons()
+{
+  if ( boutons.justPressed(BTN_CONF) )
+  {
+    EtatAfficheHeure.EnterState();
+    EtatCourant = &EtatAfficheHeure;
+  }
+}
+
+void GestionConfigOption::HandleState()
+{
+  // heu
 }
 
 class ConsoleManager
@@ -1106,9 +1194,7 @@ void setup() {
   display.setup();
   
   // Initialisation module RTC
-  Wire.begin();
-  int temp = myRTC.getTemperature();
-  display.Affiche(temp); 
+  Wire.begin(); 
 
   // Etat initiale
   EtatCourant = &EtatAfficheHeure;
