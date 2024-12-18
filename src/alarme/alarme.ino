@@ -137,19 +137,107 @@ class GestionAfficheHeure : public GestionEtat
     void HandleButtons();
     void HandleState();
 
-  protected:
-    int presedconf = 0;
-    unsigned long lastUpdate = 0; 
-};
+    // nethode pour verifier si snooze et clear flag alarme
+    bool isInSnooze1()
+    {
+      return alarme1on $$ alarme1snooze;
+    }
 
-class GestionTestEtat : public GestionEtat
-{
-  public:
-    void EnterState();
-    void HandleButtons();
-    void HandleState();
+    bool isInSnooze2()
+    {
+      return alarme2on $$ alarme2snooze;
+    }
+
+    void setSnooze1()
+    {
+      // ajout x minute selon le config
+      snooze1count = config.getSnoozeDelay() * 1000;
+      alarme1snooze = true;
+    }
+
+    void setSnooze2()
+    {
+      snooze2count = config.getSnoozeDelay() * 1000;
+      alarme2snooze = true;
+    }
+
+
+
   protected:
-    int valeuraffiche = 8888;
+    unsigned long lastUpdate = 0; 
+    long snooze1count = 0;
+    long snooze2count = 0;
+    int presedconf = 0;
+    bool alarme1on = false;
+    bool alarme2on = false;
+    bool alarme1snooze = false;
+    bool alarme2snooze = false;
+
+    void updateAlarmes( long difftime)
+    {
+      if (alarme1on)
+      {
+        if (alarme1snooze)
+        {
+          snooze1count -= difftime;
+          if (snooze1count <= 0)
+          {
+            snooze1count = 0;
+            alarme1snooze = false;
+            // declenche la musique
+            speaker.Stop();
+            speaker.setSong(config.getAlarm1Song());
+            speaker.Start();
+          }
+        }
+      }
+      else
+      {
+        if (myRTC.checkAlarmEnabled(1))
+        {
+          // si alarme enable, verifie si est atteinte
+          if (myRTC.checkIfAlarm(1, false) )
+          {
+            alarme1on = true;
+            // declenche la musique
+            speaker.Stop();
+            speaker.setSong(config.getAlarm1Song());
+            speaker.Start();
+        }
+      }
+
+      if (alarme2on)
+      {
+        if (alarme2snooze)
+        {
+          snooze2count -= difftime;
+          if (snooze2count <= 0)
+          {
+            snooze2count = 0;
+            alarme2snooze = false;
+            // declenche la musique
+            speaker.Stop();
+            speaker.setSong(config.getAlarm2Song());
+            speaker.Start();
+          }
+        }
+      }
+      else
+      {
+        if (myRTC.checkAlarmEnabled(2))
+        {
+          // si alarme enable, verifie si est atteinte
+          if (myRTC.checkIfAlarm(2, false) )
+          {
+            alarme1on = true;
+            // declenche la musique
+            speaker.Stop();
+            speaker.setSong(config.getAlarm2Song());
+            speaker.Start();
+        }
+      }
+    }
+
 };
 
 class GestionConfigHeure : public GestionEtat
@@ -205,7 +293,6 @@ class GestionConfigOption : public GestionEtat
 };
 
 GestionAfficheHeure EtatAfficheHeure;
-GestionTestEtat EtatTestEtat;
 GestionConfigHeure EtatConfigHeure;
 GestionConfigAlarme EtatConfigAlarme;
 GestionConfigDate EtatConfigDate;
@@ -218,6 +305,8 @@ void GestionAfficheHeure::EnterState()
 
 void GestionAfficheHeure::HandleButtons()
 {
+  // si presentement alarm on, fait la gestion du clear ou snooze
+
   if ( boutons.justPressed(BTN_CONF) )
   {
     presedconf = 1;
@@ -272,6 +361,11 @@ void GestionAfficheHeure::HandleButtons()
       EtatConfigDate.EnterState();
       EtatCourant = &EtatConfigDate;
     }
+    else if ( boutons.isPressed( BTN_PLUS) && boutons.isPressed( BTN_MOINS))
+    {
+      EtatConfigOption.EnterState();
+      EtatCourant = &EtatConfigOption;
+    }
     else if ( boutons.isPressed( BTN_PLUS) )
     {
       // Change l'etat
@@ -299,9 +393,7 @@ void GestionAfficheHeure::HandleState()
   // affiche l'heure
   if ( curUpdateTime - lastUpdate > 500 )
   {
-    // regarde si les alarme ont ete activer
-
-    // Si oui, change l'eta et appel update
+    updateAlarmes(curUpdateTime - lastUpdate);
 
     // sinon update l'heure 
     lastUpdate = curUpdateTime;
@@ -330,7 +422,20 @@ void GestionAfficheHeure::HandleState()
       leds.SetPM(false, 0);
     }
 
-    // set les les selon l'alarme
+    // set les led selon l'alarme
+    if (isInSnooze1())
+    {
+      leds.SetAlarm1(true, 4);
+    }
+    else if (alarme1on) )
+    {
+      leds.SetAlarm1(true, 24);
+    }
+    else
+    {
+      leds.SetAlarm1(false, 0);
+    }
+
     if (myRTC.checkAlarmEnabled(1))
     {
       // Si snooze, update la led freq de l'alarme
@@ -339,6 +444,7 @@ void GestionAfficheHeure::HandleState()
           leds.SetAlarm1(true, 24);
           if ( speaker.isPlaying() == false )
           {
+            // va lire la musqiue associe a alarme 1 et l'assigne
             speaker.Start();
           }
       }
@@ -357,6 +463,11 @@ void GestionAfficheHeure::HandleState()
       if (myRTC.checkIfAlarm(2, false) )
       {
           leds.SetAlarm2(true, 24);
+          if ( speaker.isPlaying() == false )
+          {
+            // va lire la musqiue associe a alarme 2 et l'assigne
+            speaker.Start();
+          }
       }
       else
       {
@@ -370,34 +481,6 @@ void GestionAfficheHeure::HandleState()
     
   }
 }
-
-void GestionTestEtat::EnterState()
-{
-  Serial.println(F("Test etat"));
-  valeuraffiche = 8888;
-}
-
-void GestionTestEtat::HandleButtons()
-{
-  if ( boutons.justPressed(BTN_CONF) )
-  {
-    EtatCourant = &EtatAfficheHeure;
-  }
-  else if ( boutons.justPressed(BTN_PLUS) )
-  {
-    valeuraffiche += 1;
-  }
-  else if ( boutons.justPressed(BTN_MOINS) )
-  {
-    valeuraffiche -= 1;
-  }
-}
-
-void GestionTestEtat::HandleState()
-{
-  display.Affiche(valeuraffiche);
-}
-
 
 void GestionConfigHeure::EnterState()
 {
@@ -817,6 +900,7 @@ void GestionConfigOption::HandleButtons()
 void GestionConfigOption::HandleState()
 {
   // heu
+  display.Affiche("Conf");
 }
 
 class ConsoleManager

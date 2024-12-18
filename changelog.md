@@ -1,6 +1,11 @@
 # Changelog
 
 
+## Proto 3
+
+- Gestion des configuration avec 4 boutons
+  - heure, date, alarme 1 et 2
+
 ## Proto 2
 
 + Gestion commande USB avec arguments

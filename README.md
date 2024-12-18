@@ -45,3 +45,7 @@ Version simplifiee d'un reveil matin
 
 Les configuration sont soit stocker dans le module RTC ou en EEPROM. Les heures et activation des alarmes sont celle au module RTC alors que la luminosite, la duree du snooze et les informations a propos du son sont en EEPROM
 
+## Snooze
+
+Afin de facilte la gestion du snooze tout en conservant les 2 alarmes distincte, la verification est faite selon un comtpeur interne et non selon une date/heure. En cas de perte de courant, le snooze est perdu. Cependant, comme le snooze ne ferme pas l'alarme, au retour du courant, l'alarme sonnera.
+

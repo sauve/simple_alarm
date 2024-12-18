@@ -1,18 +1,36 @@
 # Roadmap
 
 
+## Alpha 2 
++ Optimisation de la memoire Flash
+  + Utiliser 16 bits par note + duree (signed byte + tableau pour frequence en eeprom)
++ Ajouter de le son d'alarme standard (Beep repetitif)
+
+
+## Alpha 1
+
++ Gestion du snooze
+  + Plus ou moins sont le Clear de la bonne alarme, le reste c'est le snooze
++ Gestion de la config EEPROM
+  + luminosite avec changement sur + et -
+  + Gestion LED selon luminosite ( max lum)
+  + longeur du snooze
+  + musique associe a l'alarme
+  + Configuration via conf + Plus + moins
++ Gestion animation et controle separe de l'affichage
+  + scrolling du texte
+    - Date complete a la fin de set date et a minuit ou sur OK
+  + flash gauche, droite, complet
++ help retourne la liste de commande USB
+  + Menage sur les commande de test
+
+
 ## Proto 3
 
 + Gestion des 4 boutons
   + Etat pour assignation de l'heure
   + Etat pour assignation de la date
   + Etat pour assignation alarme 1
-+ Gestion de la config EEPROM
-  + luminosite avec changement sur + et -
-  + GEstion LED selon luminosite
-+ Gestion animation et controle separe de l'affichage
-  + scrolling du texte
-  + flash gauche, droite, complet
 
 ## Proto 2
 
