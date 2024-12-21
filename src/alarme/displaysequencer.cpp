@@ -1,20 +1,20 @@
 #include "displaysequencer.h"
 
 
-void DisplaySequencer::setup()
+void DisplaySequencer::setup(byte luminosite)
 {
-  // va lire la luminosite en EEPROM
   // initialise le display et la comm
   // clear display par defaut
   // initialisation Afficheur 7 segment
   tm.begin();
   tm.colonOn();
-  tm.setBrightness(5);
-  curluminosite = 5;
+  tm.setBrightness(luminosite);
+  curluminosite = luminosite;
   for(int i=0; i < 32; i++)
   {
     buffer[i] = 0;
   }
+  tm.display((const char*)buffer);
 }
 
 void DisplaySequencer::update()

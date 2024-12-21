@@ -9,7 +9,7 @@ class DisplaySequencer
 {
   public:
     DisplaySequencer() : tm(CLK, DIO) {}
-    void setup();
+    void setup(byte luminosite);
     void update();
 
     

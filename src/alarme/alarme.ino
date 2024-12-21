@@ -10,12 +10,7 @@
 #include "displaysequencer.h"
 #include "gestbouton.h"
 
-
-
-
-
 /// command string
-const char showtime_cmdstr[] PROGMEM = {"showtime"};
 const char settime_cmdstr[] PROGMEM = {"settime"};
 const char setdate_cmdstr[] PROGMEM = {"setdate"};
 const char gettimedate_cmdstr[] PROGMEM = {"gettimedate"};
@@ -23,12 +18,9 @@ const char getalarm1_cmdstr[] PROGMEM = {"getalarm1"};
 const char setalarm1_cmdstr[] PROGMEM = {"setalarm1"};
 const char setalarm1on_cmdstr[] PROGMEM = {"setalarm1on"};
 const char clearalarm1_cmdstr[] PROGMEM = {"clearalarm1"};
-const char fade_cmdstr[] PROGMEM = {"fade"};
 const char getalarm2_cmdstr[] PROGMEM = {"getalarm2"};
 const char setalarm2_cmdstr[] PROGMEM = {"setalarm2"};
 const char ledon_cmdstr[] PROGMEM = {"ledon"};
-const char ledoff_cmdstr[] PROGMEM = {"ledoff"};
-const char showtext_cmdstr[] PROGMEM = {"showtext"};
 const char temp_cmdstr[] PROGMEM = {"temp"};
 const char beep_cmdstr[] PROGMEM = {"beep"};
 const char play_cmdstr[] PROGMEM = {"play"};
@@ -62,8 +54,8 @@ const byte nbrjourmois[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 // Information de version
 #define MAJOR_VERSION 0
-#define MINOR_VERSION 2
-#define REVISON_VERISON 0
+#define MINOR_VERSION 3
+#define REVISON_VERISON 2
 //const char device_str[] PROGMEM = {"Reveil matin maison chose"}; 
 //const char version_str[] PROGMEM = {"Version: "}; 
 
@@ -111,24 +103,6 @@ SpeakerSequencer speaker;
 
 // methode utilitaire hors etat
 
-void clearAlarme( byte alarme )
-{
-  // arrete la musique
-  if (alarme == 0)
-  {
-    speaker.Stop();
-    // clear  
-    myRTC.checkIfAlarm(1);
-  }
-  else if (alarme == 1)
-  {
-    speaker.Stop();
-    // clear  
-    myRTC.checkIfAlarm(2);
-  }
-}
-
-
 
 class GestionAfficheHeure : public GestionEtat
 {
@@ -140,12 +114,12 @@ class GestionAfficheHeure : public GestionEtat
     // nethode pour verifier si snooze et clear flag alarme
     bool isInSnooze1()
     {
-      return alarme1on $$ alarme1snooze;
+      return alarme1on && alarme1snooze;
     }
 
     bool isInSnooze2()
     {
-      return alarme2on $$ alarme2snooze;
+      return alarme2on && alarme2snooze;
     }
 
     void setSnooze1()
@@ -161,7 +135,7 @@ class GestionAfficheHeure : public GestionEtat
       alarme2snooze = true;
     }
 
-
+    void clearAlarme(byte alarme );
 
   protected:
     unsigned long lastUpdate = 0; 
@@ -234,9 +208,11 @@ class GestionAfficheHeure : public GestionEtat
             speaker.Stop();
             speaker.setSong(config.getAlarm2Song());
             speaker.Start();
+          }
         }
       }
     }
+  }
 
 };
 
@@ -290,6 +266,10 @@ class GestionConfigOption : public GestionEtat
     void HandleState();
   protected:
     byte etapeoption = 0;
+    byte newlum;
+    byte newsnooze;
+    byte newa1song;
+    byte newa2song;
 };
 
 GestionAfficheHeure EtatAfficheHeure;
@@ -301,6 +281,23 @@ GestionConfigOption EtatConfigOption;
 void GestionAfficheHeure::EnterState()
 {
   Serial.println(F("Etat Affiche Heure"));
+}
+
+void GestionAfficheHeure::clearAlarme( byte alarme )
+{
+  // arrete la musique
+  if (alarme == 0)
+  {
+    speaker.Stop();
+    // clear  
+    myRTC.checkIfAlarm(1);
+  }
+  else if (alarme == 1)
+  {
+    speaker.Stop();
+    // clear  
+    myRTC.checkIfAlarm(2);
+  }
 }
 
 void GestionAfficheHeure::HandleButtons()
@@ -326,7 +323,7 @@ void GestionAfficheHeure::HandleButtons()
   {
     if (boutons.justPressed(BTN_PLUS) )
     {
-      if (myRTC.checkIfAlarm(1, false))
+      if (alarme1on & !isInSnooze1())
       {
         clearAlarme(0);
       }
@@ -337,7 +334,7 @@ void GestionAfficheHeure::HandleButtons()
     }
     if (boutons.justPressed(BTN_MOINS) )
     {
-      if (myRTC.checkIfAlarm(2, false))
+      if (alarme2on & !isInSnooze2())
       {
         clearAlarme(1);
       }
@@ -427,7 +424,7 @@ void GestionAfficheHeure::HandleState()
     {
       leds.SetAlarm1(true, 4);
     }
-    else if (alarme1on) )
+    else if (alarme1on)
     {
       leds.SetAlarm1(true, 24);
     }
@@ -436,49 +433,19 @@ void GestionAfficheHeure::HandleState()
       leds.SetAlarm1(false, 0);
     }
 
-    if (myRTC.checkAlarmEnabled(1))
+    if (isInSnooze2())
     {
-      // Si snooze, update la led freq de l'alarme
-      if (myRTC.checkIfAlarm(1, false) )
-      {
-          leds.SetAlarm1(true, 24);
-          if ( speaker.isPlaying() == false )
-          {
-            // va lire la musqiue associe a alarme 1 et l'assigne
-            speaker.Start();
-          }
-      }
-      else
-      {
-        leds.SetAlarm1(true, 0);
-      }
+      leds.SetAlarm2(true, 4);
     }
-    else
+    else if (alarme2on)
     {
-      leds.SetAlarm1(false, 0);
-    }
-    
-    if (myRTC.checkAlarmEnabled(2))
-    {
-      if (myRTC.checkIfAlarm(2, false) )
-      {
-          leds.SetAlarm2(true, 24);
-          if ( speaker.isPlaying() == false )
-          {
-            // va lire la musqiue associe a alarme 2 et l'assigne
-            speaker.Start();
-          }
-      }
-      else
-      {
-        leds.SetAlarm2(true, 0);
-      }
+      leds.SetAlarm2(true, 24);
     }
     else
     {
       leds.SetAlarm2(false, 0);
     }
-    
+
   }
 }
 
@@ -886,6 +853,10 @@ void GestionConfigDate::HandleState()
 void GestionConfigOption::EnterState()
 {
   etapeoption = 0;
+  newlum = config.getBrightness();
+  newsnooze = config.getSnoozeDelay();
+  newa1song = config.getAlarm1Song();
+  newa2song = config.getAlarm2Song();
 }
 
 void GestionConfigOption::HandleButtons()
@@ -895,12 +866,135 @@ void GestionConfigOption::HandleButtons()
     EtatAfficheHeure.EnterState();
     EtatCourant = &EtatAfficheHeure;
   }
+  else if ( boutons.justPressed(BTN_OK) )
+  {
+    etapeoption += 1;
+    if ( etapeoption > 3 )
+    {
+      // set les configs avec les nouvelles valeures
+     config.setBrightness(newlum);
+     config.setSnoozeDelay(newsnooze);
+     config.setAlarm1Song(newa1song);
+     config.setAlarm2Song(newa2song);
+     config.saveconfig();
+      
+      EtatAfficheHeure.EnterState();
+      EtatCourant = &EtatAfficheHeure;
+    }
+  }
+  else if ( boutons.justPressed(BTN_PLUS) )
+  {
+    if ( etapeoption == 0 )
+    {
+      newlum += 1;
+      if (newlum > 8)
+      {
+        newlum = 1;
+      }
+    }
+    else if (etapeoption == 1)
+    {
+      newsnooze += 1;
+      if (newsnooze > 15)
+      {
+        newsnooze = 4;
+      }
+    }
+    else if (etapeoption == 2)
+    {
+      newa1song += 1;
+      if (newa1song > 4)
+      {
+        newa1song = 0;
+      }
+    }
+    else if (etapeoption == 3)
+    {
+      newa2song += 1;
+      if (newa2song > 4)
+      {
+        newa2song = 0;
+      }
+    }
+  }
+  else if ( boutons.justPressed(BTN_MOINS) )
+  {
+    if ( etapeoption == 0 )
+    {
+      newlum -= 1;
+      if (newlum < 1)
+      {
+        newlum = 8;
+      }
+    }
+    else if (etapeoption == 1)
+    {
+      newsnooze -= 1;
+      if (newsnooze < 4)
+      {
+        newsnooze = 15;
+      }
+    }
+    else if (etapeoption == 2)
+    {
+      if (newa1song == 0)
+      {
+        newa1song = 4;
+       }
+      else
+      {
+        newa1song -= 1;
+      }
+    }
+    else if (etapeoption == 3)
+    {
+      if (newa2song == 0)
+      {
+        newa2song = 4;
+       }
+      else
+      {
+        newa2song -= 1;
+      }
+    }
+  }
 }
 
 void GestionConfigOption::HandleState()
 {
-  // heu
-  display.Affiche("Conf");
+  char outstr[5];
+  outstr[4] = 0;
+  switch (etapeoption)
+  {
+    case 0:
+      outstr[0] = 'L';
+      outstr[1] = 'u';
+      outstr[2] = ' ';
+      outstr[3] = '0' + (newlum % 10);
+      display.Affiche(outstr);
+      break;
+    case 1:
+      outstr[0] = 'S';
+      outstr[1] = 'n';
+      outstr[2] = '0'+ (newsnooze / 10);
+      outstr[3] = '0' + (newsnooze % 10);
+      display.Affiche(outstr);
+      break;
+    case 2:
+      outstr[0] = 'A';
+      outstr[1] = '1';
+      outstr[2] = ' ';
+      outstr[3] = '0' + (newa1song % 10);
+      display.Affiche(outstr);
+      break;
+    case 3:
+      outstr[0] = 'A';
+      outstr[1] = '2';
+      outstr[2] = ' ';
+      outstr[3] = '0' + (newa2song % 10);
+      display.Affiche(outstr);
+      break;  
+  }
 }
 
 class ConsoleManager
@@ -956,8 +1050,6 @@ void ConsoleManager::printCommandes()
 {
   char buffer[32];
 
-  strcpy_P(buffer, showtime_cmdstr);
-  Serial.println(buffer);
   strcpy_P(buffer, settime_cmdstr);
   Serial.println(buffer);
   strcpy_P(buffer, setdate_cmdstr);
@@ -970,20 +1062,44 @@ void ConsoleManager::printCommandes()
   Serial.println(buffer);
   strcpy_P(buffer, setalarm1on_cmdstr);
   Serial.println(buffer);
+  strcpy_P(buffer, clearalarm1_cmdstr);
+  Serial.println(buffer);
+
+  strcpy_P(buffer, getalarm2_cmdstr);
+  Serial.println(buffer);
+  strcpy_P(buffer, setalarm2_cmdstr);
+  Serial.println(buffer);
+
+
+  strcpy_P(buffer, ledon_cmdstr);
+  Serial.println(buffer);
+
+  strcpy_P(buffer, temp_cmdstr);
+  Serial.println(buffer);
+
+  strcpy_P(buffer, beep_cmdstr);
+  Serial.println(buffer);
+
+  strcpy_P(buffer, play_cmdstr);
+  Serial.println(buffer);
+
+  strcpy_P(buffer, stop_cmdstr);
+  Serial.println(buffer);
+
+  strcpy_P(buffer, song_cmdstr);
+  Serial.println(buffer);
+
+  strcpy_P(buffer, clearconf_cmdstr);
+  Serial.println(buffer);
+
+  strcpy_P(buffer, showconf_cmdstr);
+  Serial.println(buffer);
 }
 
 void ConsoleManager::processCmd()
 {
   cmd.debugPrint();
-  if (cmd.cmpCmd_P(showtime_cmdstr)==0)
-  {
-    bool h12Flag;
-    bool pmFlag;
-    int hour = myRTC.getHour(h12Flag, pmFlag);
-    int minute = myRTC.getMinute();
-    display.AfficheHeure(hour, minute);
-  }
-  else if (cmd.cmpCmd_P(settime_cmdstr)==0)
+  if (cmd.cmpCmd_P(settime_cmdstr)==0)
   {
     // set date
     if ( cmd.nbrArg() == 3 )
@@ -1102,19 +1218,7 @@ void ConsoleManager::processCmd()
   {
     // clear alarm 1
     Serial.println(F("commande clearalarm1"));
-    clearAlarme(0);
-  }
-  else if (cmd.cmpCmd_P(fade_cmdstr)==0)
-  {
-    // set alarm 1
-    for (int i = 8; i >= 0; i -= 1)
-    {
-      display.ChangeLuminosite(i);
-      display.Affiche("fade");
-      delay(100);
-      
-    }
-    display.ChangeLuminosite(5);
+    EtatAfficheHeure.clearAlarme(0);
   }
   else if (cmd.cmpCmd_P(getalarm2_cmdstr)==0)
   {
@@ -1155,55 +1259,6 @@ void ConsoleManager::processCmd()
     leds.SetAlarm1( true, 10);
     leds.SetAlarm2( true, 128);
   }
-  else if (cmd.cmpCmd_P(ledoff_cmdstr)==0)
-  {
-    // state
-    leds.SetPM( false, 0);
-    leds.SetAlarm1( false, 0);
-    leds.SetAlarm2( false, 0);
-  }
-  else if (cmd.cmpCmd_P(showtext_cmdstr)==0)
-  {
-    // state
-    display.Affiche_P(lundi_str); 
-    delay(1000);
-   display.Affiche_P(mardi_str); 
-    delay(1000);
-    display.Affiche_P(mercredi_str); 
-    delay(1000);
-    display.Affiche_P(jeudi_str); 
-    delay(1000);
-    display.Affiche_P(vendredi_str); 
-    delay(1000);
-    display.Affiche_P(samedi_str); 
-    delay(1000);
-    display.Affiche_P(dimanche_str); 
-    delay(1000);
-    display.Affiche_P(janvier_str); 
-    delay(1000);
-    display.Affiche_P(fevrier_str); 
-    delay(1000);
-    display.Affiche_P(mars_str); 
-    delay(1000);
-    display.Affiche_P(avril_str); 
-    delay(1000);
-    display.Affiche_P(mai_str); 
-    delay(1000);
-    display.Affiche_P(juin_str); 
-    delay(1000);
-    display.Affiche_P(juillet_str); 
-    delay(1000);
-    display.Affiche_P(aout_str); 
-    delay(1000);
-    display.Affiche_P(septembre_str)     ; 
-    delay(1000);
-    display.Affiche_P(octobre_str); 
-    delay(1000);
-    display.Affiche_P(novembre_str); 
-    delay(1000);
-    display.Affiche_P(decembre_str); 
-    delay(1000); 
-  }
   else if (cmd.cmpCmd_P(temp_cmdstr)==0)
   {
     // state
@@ -1234,15 +1289,7 @@ void ConsoleManager::processCmd()
   }
   else if (cmd.cmpCmd_P(showconf_cmdstr)==0)
   {
-    Serial.println(F("Configuration courante"));
-    Serial.print(F("luminosite: "));
-    Serial.println(config.getBrightness());
-    Serial.print(F("snooze: "));
-    Serial.println(config.getSnoozeDelay());
-    Serial.print(F("Alarme 1: "));
-    Serial.println(config.getAlarm1Song());
-    Serial.print(F("Alarme 2: "));
-    Serial.println(config.getAlarm2Song());
+    config.debugPrint();
   }
   else if (cmd.cmpCmd("help")==0)
   {
@@ -1268,14 +1315,14 @@ void setup() {
   
   // pinmode pour les LED
   leds.setup();
-  leds.SetPM( false, 1);
-  leds.SetAlarm1( false, 10);
-  leds.SetAlarm2( false, 128);
+  leds.SetPM( false, 0);
+  leds.SetAlarm1( false, 0);
+  leds.SetAlarm2( false, 0);
 
   // inititalisation speaker
   speaker.setup();
   
-  display.setup();
+  display.setup(config.getBrightness());
   
   // Initialisation module RTC
   Wire.begin(); 

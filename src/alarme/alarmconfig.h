@@ -5,6 +5,7 @@
 #define EEPROMADDR_SNOOZE 1
 #define EEPROMADDR_ALARM1SONG 2
 #define EEPROMADDR_ALARM2SONG 3
+#define EEPROMADDR_VERSION 4
 
 class AlarmConfig
 {
@@ -13,7 +14,7 @@ class AlarmConfig
         void saveconfig();
         void clearconfig();
 
-        void degbugPrint();
+        void debugPrint();
 
         byte getBrightness();
         void setBrightness(byte brightess);
@@ -26,6 +27,8 @@ class AlarmConfig
 
         byte getAlarm2Song();
         void setAlarm2Song(byte song);
+
+        byte getVersionConfig();
     
     protected:
         byte versionconfig;
