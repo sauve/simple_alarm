@@ -54,8 +54,8 @@ const byte nbrjourmois[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 // Information de version
 #define MAJOR_VERSION 0
-#define MINOR_VERSION 3
-#define REVISON_VERISON 2
+#define MINOR_VERSION 4
+#define REVISON_VERISON 0
 //const char device_str[] PROGMEM = {"Reveil matin maison chose"}; 
 //const char version_str[] PROGMEM = {"Version: "}; 
 
@@ -125,14 +125,16 @@ class GestionAfficheHeure : public GestionEtat
     void setSnooze1()
     {
       // ajout x minute selon le config
-      snooze1count = config.getSnoozeDelay() * 1000;
+      snooze1count = (long)config.getSnoozeDelay() * (1000L * 60L);
       alarme1snooze = true;
+      speaker.Stop();
     }
 
     void setSnooze2()
     {
-      snooze2count = config.getSnoozeDelay() * 1000;
+      snooze2count = (long)config.getSnoozeDelay() * (1000L * 60L);
       alarme2snooze = true;
+      speaker.Stop();
     }
 
     void clearAlarme(byte alarme );
@@ -203,7 +205,7 @@ class GestionAfficheHeure : public GestionEtat
           // si alarme enable, verifie si est atteinte
           if (myRTC.checkIfAlarm(2, false) )
           {
-            alarme1on = true;
+            alarme2on = true;
             // declenche la musique
             speaker.Stop();
             speaker.setSong(config.getAlarm2Song());
@@ -280,7 +282,7 @@ GestionConfigOption EtatConfigOption;
 
 void GestionAfficheHeure::EnterState()
 {
-  Serial.println(F("Etat Affiche Heure"));
+  
 }
 
 void GestionAfficheHeure::clearAlarme( byte alarme )
@@ -291,12 +293,16 @@ void GestionAfficheHeure::clearAlarme( byte alarme )
     speaker.Stop();
     // clear  
     myRTC.checkIfAlarm(1);
+    alarme1on = false;
+    alarme1snooze = false;
   }
   else if (alarme == 1)
   {
     speaker.Stop();
     // clear  
     myRTC.checkIfAlarm(2);
+    alarme2on = false;
+    alarme2snooze = false;
   }
 }
 
@@ -306,7 +312,18 @@ void GestionAfficheHeure::HandleButtons()
 
   if ( boutons.justPressed(BTN_CONF) )
   {
-    presedconf = 1;
+    if (alarme2on & !isInSnooze2())
+    {
+      setSnooze2();
+    }
+    else if (alarme1on & !isInSnooze1())
+    {
+      setSnooze1();
+    }
+    else
+    {
+      presedconf = 1;
+    }
   }
   else if ( boutons.stillPressed(BTN_CONF) )
   {
@@ -323,29 +340,46 @@ void GestionAfficheHeure::HandleButtons()
   {
     if (boutons.justPressed(BTN_PLUS) )
     {
-      if (alarme1on & !isInSnooze1())
+      if (alarme1on)
       {
         clearAlarme(0);
+      }
+      else if (alarme2on & !isInSnooze2())
+      {
+        setSnooze2();
       }
       else 
       {
         display.ChangeLuminosite(1);
+        leds.ChangeLuminosite(1);
       }
     }
     if (boutons.justPressed(BTN_MOINS) )
     {
-      if (alarme2on & !isInSnooze2())
+      if (alarme2on)
       {
         clearAlarme(1);
+      }
+      else if (alarme1on & !isInSnooze1())
+      {
+        setSnooze1();
       }
       else 
       {
         display.ChangeLuminosite(-1);
+        leds.ChangeLuminosite(-1);
       }
     }
     if (boutons.justPressed(BTN_OK) )
     {
-      //leds.SetPM(true, 0);
+      if (alarme2on & !isInSnooze2())
+      {
+        setSnooze2();
+      }
+      else if (alarme1on & !isInSnooze1())
+      {
+        setSnooze1();
+      }
     }
   }
 
@@ -428,6 +462,10 @@ void GestionAfficheHeure::HandleState()
     {
       leds.SetAlarm1(true, 24);
     }
+    else if (myRTC.checkAlarmEnabled(1))
+    {
+      leds.SetAlarm1(true, 0);
+    }
     else
     {
       leds.SetAlarm1(false, 0);
@@ -440,6 +478,10 @@ void GestionAfficheHeure::HandleState()
     else if (alarme2on)
     {
       leds.SetAlarm2(true, 24);
+    }
+    else if (myRTC.checkAlarmEnabled(2))
+    {
+      leds.SetAlarm2(true, 0);
     }
     else
     {
@@ -608,6 +650,7 @@ void GestionConfigAlarme::HandleButtons()
       }
       else
       {
+        myRTC.setA2Time(1, nouvelleheure, nouvelleminte, 0b01000000, true, false, false);
         if (onoff)
         {
           myRTC.turnOnAlarm(2);
@@ -1314,7 +1357,7 @@ void setup() {
   console.Setup();
   
   // pinmode pour les LED
-  leds.setup();
+  leds.setup(config.getBrightness());
   leds.SetPM( false, 0);
   leds.SetAlarm1( false, 0);
   leds.SetAlarm2( false, 0);

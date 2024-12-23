@@ -1,12 +1,12 @@
 #include "ledsequencer.h"
 
-void LEDSequencer::setup()
+void LEDSequencer::setup(byte luminosite)
 {
   pinMode(LED_PM_PIN, OUTPUT);
   pinMode(LED_ALARM_PIN, OUTPUT);
   pinMode(LED_ALARM2_PIN, OUTPUT);
 
-  maxBrightness = 255;
+  maxBrightness = (255 / 8) * luminosite;
   pmFreq = 0;
   pmOn = false;
   Alarm1Freq = 0;
@@ -107,4 +107,32 @@ void LEDSequencer::SetAlarm2(bool on, int freq)
   Alarm2Freq = freq;
   if (Alarm2Freq < 0) Alarm2Freq = 0;
   if (Alarm2Freq > 128) Alarm2Freq = 128;
+}
+
+
+void LEDSequencer::ChangeLuminosite(int luminosite)
+{
+  maxBrightness += (255 / 8) * luminosite;
+  if ( maxBrightness < (255 / 8) )
+  {
+    maxBrightness = 255 / 8;
+  }
+  else if ( maxBrightness > 255)
+  {
+    maxBrightness = 255;
+  }
+  
+}
+
+void LEDSequencer::setLuminosite(byte luminosite)
+{
+  maxBrightness = (255 / 8) * luminosite;
+  if ( maxBrightness < (255 / 8) )
+  {
+    maxBrightness = 255 / 8;
+  }
+  else if ( maxBrightness > 255)
+  {
+    maxBrightness = 255;
+  }
 }

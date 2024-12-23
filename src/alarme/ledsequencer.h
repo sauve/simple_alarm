@@ -8,12 +8,15 @@
 class LEDSequencer
 {
   public:
-  void setup();
+  void setup(byte luminosite);
   void update();
 
   void SetPM(bool on, int freq);
   void SetAlarm1(bool on, int freq);
   void SetAlarm2(bool on, int freq);
+
+  void ChangeLuminosite(int luminosite);
+  void setLuminosite(byte luminosite);
 
   protected:
     int maxBrightness;
