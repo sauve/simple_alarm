@@ -274,11 +274,22 @@ class GestionConfigOption : public GestionEtat
     byte newa2song;
 };
 
+class GestionJukebox : public GestionEtat
+{
+  public:
+    void EnterState();
+    void HandleButtons();
+    void HandleState();
+  protected:
+    byte cursong;
+};
+
 GestionAfficheHeure EtatAfficheHeure;
 GestionConfigHeure EtatConfigHeure;
 GestionConfigAlarme EtatConfigAlarme;
 GestionConfigDate EtatConfigDate;
 GestionConfigOption EtatConfigOption;
+GestionJukebox EtatJukebox;
 
 void GestionAfficheHeure::EnterState()
 {
@@ -385,17 +396,22 @@ void GestionAfficheHeure::HandleButtons()
 
   if( presedconf == 200 )
   {
-    // si OK, Plus ou moins sont aussi appuyer
+    // si OK, Plus ou moins sont aussi appuyer pour la configuration
     presedconf = 0;  
-    if (  boutons.isPressed( BTN_OK) )
+    if ( boutons.isPressed( BTN_OK) && boutons.isPressed( BTN_PLUS) && boutons.isPressed( BTN_MOINS))
     {
-      EtatConfigDate.EnterState();
-      EtatCourant = &EtatConfigDate;
+      EtatJukebox.EnterState();
+      EtatCourant = &EtatJukebox;
     }
     else if ( boutons.isPressed( BTN_PLUS) && boutons.isPressed( BTN_MOINS))
     {
       EtatConfigOption.EnterState();
       EtatCourant = &EtatConfigOption;
+    }
+    else if (  boutons.isPressed( BTN_OK) )
+    {
+      EtatConfigDate.EnterState();
+      EtatCourant = &EtatConfigDate;
     }
     else if ( boutons.isPressed( BTN_PLUS) )
     {
@@ -1039,6 +1055,70 @@ void GestionConfigOption::HandleState()
       break;  
   }
 }
+
+
+void GestionJukebox::EnterState()
+{
+  cursong = 0;
+  speaker.setSong(cursong);
+  //speaker.Start();
+}
+
+void GestionJukebox::HandleButtons()
+{
+  if ( boutons.justPressed(BTN_CONF) )
+  {
+    EtatAfficheHeure.EnterState();
+    EtatCourant = &EtatAfficheHeure;
+  }
+  else if ( boutons.justPressed(BTN_OK) )
+  {
+    // Play / stop
+    if (speaker.isPlaying())
+    {
+      speaker.Stop();
+    }
+    else
+    {
+      speaker.Start();
+    }
+  }
+  else if ( boutons.justPressed(BTN_PLUS) )
+  {
+    cursong += 1;
+    if (cursong > 4)
+    {
+      cursong = 0;
+    }
+    speaker.setSong(cursong);
+  }
+  else if ( boutons.justPressed(BTN_MOINS) )
+  {
+    if (cursong == 0)
+    {
+      cursong = 4;
+    }
+    else
+    {
+      cursong -= 1;
+    }
+    speaker.setSong(cursong);
+  }
+}
+
+void GestionJukebox::HandleState()
+{
+  // Affiche le numero de la chanson
+  // Animation si play
+  char outstr[5];
+  outstr[4] = 0;
+  outstr[0] = 'S';
+  outstr[1] = 'n';
+  outstr[2] = '0'+ (cursong / 10);
+  outstr[3] = '0' + (cursong % 10);
+  display.Affiche(outstr);
+}
+
 
 class ConsoleManager
 {
