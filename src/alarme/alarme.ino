@@ -54,7 +54,7 @@ const byte nbrjourmois[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 // Information de version
 #define MAJOR_VERSION 0
-#define MINOR_VERSION 4
+#define MINOR_VERSION 5
 #define REVISON_VERISON 0
 //const char device_str[] PROGMEM = {"Reveil matin maison chose"}; 
 //const char version_str[] PROGMEM = {"Version: "}; 
@@ -75,9 +75,107 @@ byte getNombreJourMois(int mois, int annee)
   return pgm_read_byte_near(nbrjourmois + mois);
 }
 
-void GenereDateString(int annee, int mois, int jour, int dow, int heure, int minute, char *buffer)
+void GenereDateString(int annee, int mois, int jour, int dow, int heure, int minute, char *buffer, byte bufflen)
 {
     // doit remettre les tableau de jour de semaine et de mois en tant qu'array en progmem
+    // doit avoir une taille de buffer minimum
+    // clear le buffer
+    for(byte i = 0; i < bufflen; i++)
+    {
+      buffer[i] = 0;
+    }
+    int chridx = 0;
+    switch (dow)
+    {
+      case 0:
+        strcpy_P(buffer + chridx, dimanche_str);
+        break;
+      case 1:
+        strcpy_P(buffer + chridx, lundi_str);
+        break;
+      case 2:
+        strcpy_P(buffer + chridx, mardi_str);
+        break;
+      case 3:
+        strcpy_P(buffer + chridx, mercredi_str);
+        break;
+      case 4:
+        strcpy_P(buffer + chridx, jeudi_str);
+        break;
+      case 5:
+        strcpy_P(buffer + chridx, vendredi_str);
+        break;
+      case 6:
+        strcpy_P(buffer + chridx, samedi_str);
+        break;
+    }
+    chridx = strlen(buffer); 
+    buffer[chridx] = ' ';
+    chridx++;
+    if (jour < 10)
+    {
+      buffer[chridx] = '0' + jour;
+      chridx++;
+    }
+    else
+    {
+      buffer[chridx] = '0' + (jour / 10);
+      chridx++;
+      buffer[chridx] = '0' + (jour % 10);
+      chridx++;
+    }
+    buffer[chridx] = ' ';
+    chridx++;
+    switch (mois)
+    {
+      case 1:
+        strcpy_P(buffer + chridx, janvier_str);
+        break;
+      case 2:
+        strcpy_P(buffer + chridx, fevrier_str);
+        break;
+      case 3:
+        strcpy_P(buffer + chridx, mars_str);
+        break;
+      case 4:
+        strcpy_P(buffer + chridx, avril_str);
+        break;
+      case 5:
+        strcpy_P(buffer + chridx, mai_str);
+        break;
+      case 6:
+        strcpy_P(buffer + chridx, juin_str);
+        break;
+      case 7:
+        strcpy_P(buffer + chridx, juillet_str);
+        break;
+      case 8:
+        strcpy_P(buffer + chridx, aout_str);
+        break;
+      case 9:
+        strcpy_P(buffer + chridx, septembre_str);
+        break;
+      case 10:
+        strcpy_P(buffer + chridx, octobre_str);
+        break;
+      case 11:
+        strcpy_P(buffer + chridx, novembre_str);
+        break;
+      case 12:
+        strcpy_P(buffer + chridx, decembre_str);
+        break;
+    }
+    chridx = strlen(buffer);
+    buffer[chridx] = ' ';
+    chridx++;
+    buffer[chridx] = '2';
+    chridx++;
+    buffer[chridx] = '0';
+    chridx++;
+    buffer[chridx] = '0' + (annee / 10);
+    chridx++;
+    buffer[chridx] = '0' + (annee % 10);
+    chridx++;
 }
 
 
@@ -282,6 +380,16 @@ class GestionJukebox : public GestionEtat
     void HandleState();
   protected:
     byte cursong;
+};
+
+class GestionAfficheDate : public GestionEtat
+{
+  public:
+    void EnterState();
+    void HandleButtons();
+    void HandleState();
+  protected:
+    long tempsaffiche = 0;
 };
 
 GestionAfficheHeure EtatAfficheHeure;
@@ -1061,13 +1169,14 @@ void GestionJukebox::EnterState()
 {
   cursong = 0;
   speaker.setSong(cursong);
-  //speaker.Start();
+  display.DeuxPointsOn(false);
 }
 
 void GestionJukebox::HandleButtons()
 {
   if ( boutons.justPressed(BTN_CONF) )
   {
+    speaker.Stop();
     EtatAfficheHeure.EnterState();
     EtatCourant = &EtatAfficheHeure;
   }
@@ -1119,6 +1228,24 @@ void GestionJukebox::HandleState()
   display.Affiche(outstr);
 }
 
+void GestionAfficheDate::EnterState()
+{
+  tempsaffiche = 0;
+  display.DeuxPointsOn(false);
+}
+
+void GestionAfficheDate::HandleButtons()
+{
+  if ( boutons.justPressed(BTN_CONF) )
+  {
+    speaker.Stop();
+    EtatAfficheHeure.EnterState();
+    EtatCourant = &EtatAfficheHeure;
+  }
+}
+
+void GestionAfficheDate::HandleState()
+{}
 
 class ConsoleManager
 {
@@ -1287,6 +1414,9 @@ void ConsoleManager::processCmd()
     Serial.print(":");
     Serial.print(second);
     Serial.println();
+    char buffer[32];
+    GenereDateString(year, month, date, dow, hour, minute, buffer, 32);
+    Serial.println(buffer);
   }
   else if (cmd.cmpCmd_P(getalarm1_cmdstr)==0)
   {
