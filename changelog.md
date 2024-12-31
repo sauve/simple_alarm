@@ -1,6 +1,20 @@
 # Changelog
 
 
+## Alpha 1
+- Verison 0.5
+- Gestion du Snooze
+- Gestion des config en EEPROM
+  - Luminosite de base, duree du snooze, musique alarme 1 et 2
+  - Ajout version des parametre
+- Ajout etat pour configuration de parametre EEPROM
+  - CONF + PLUS + MOINS
+- Ajout etat pour Jukebox
+  - CONF + OK + PLUS + MOINS
+- Menage des commandes USB
+
+
+
 ## Proto 3
 
 - Gestion des configuration avec 4 boutons

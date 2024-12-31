@@ -21,6 +21,8 @@ class DisplaySequencer
     void DeuxPointsOn(bool on);
     void DisplayOnOff(bool on);
 
+    void Scroll( int speed, bool bounce, int nbr);
+
 
     void AfficheHeure(int heure, int minute); 
     void Affiche(int valeur);
@@ -29,22 +31,29 @@ class DisplaySequencer
     void Clear();
 
   protected:
+    void displaypushbuffer();
+  
     TM1637 tm;
+    unsigned long lastUpdate;
     int lastFlash = 0;
-    bool flashDroit = false;
-    bool flashGauche = false;
-    bool flashCentre = false;
 
     char buffer[32];
     int bufferlen = 0;
     int bufferidx = 0;
     int scrollspeed = 0;
     int scrolldir = 1;
+    int scrollcount = 0;
+    char fillchar = ' ';
+    char pushbuffer[5];
     byte curluminosite;
     bool needUpdate = false;
+    bool scrollbounce = false;
+    bool flashDroit = false;
+    bool flashGauche = false;
+    bool flashCentre = false;
+    
     
     
     // valeur affichage
-    // devrait avoir le display ici, tout passe par le sequenceur
     // Flash pourrait etre plus un fade ou hard flash
 };
